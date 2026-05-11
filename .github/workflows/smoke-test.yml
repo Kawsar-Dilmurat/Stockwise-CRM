@@ -1,0 +1,18 @@
+name: Production Smoke Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  smoke-test:
+    name: Check production API endpoints
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check backend health endpoint
+        run: |
+          curl --fail --silent --show-error https://stockwise-backend-p774.onrender.com/api/health
+
+      - name: Check products endpoint
+        run: |
+          curl --fail --silent --show-error https://stockwise-backend-p774.onrender.com/api/products
