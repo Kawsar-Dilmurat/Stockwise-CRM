@@ -94,6 +94,7 @@ export default function Dashboard() {
     })
     .reduce((sum, sale) => sum + sale.quantity, 0);
   const lowStockItems = Array.isArray(lowStock) ? lowStock : lowStock?.items ?? lowStock?.data ?? [];
+  const topSupplierItems = Array.isArray(topSuppliers) ? topSuppliers : topSuppliers?.items ?? topSuppliers?.data ?? [];
   return (
     <div data-testid="dashboard-page" className="space-y-8">
       <div className="flex items-start justify-between flex-wrap gap-4">
@@ -263,16 +264,16 @@ export default function Dashboard() {
         <CardContent>
           {!topSuppliers ? (
             <Skeleton className="h-24 w-full" />
-          ) : topSuppliers.length === 0 ? (
+          ) : topSupplierItems.length === 0 ? (
             <p className="text-zinc-500 text-sm">
               No supplier activity yet — attach a supplier when recording a restock to start tracking.
             </p>
           ) : (
             (() => {
-              const max = Math.max(...topSuppliers.map((s) => s.total_units), 1);
+              const max = Math.max(...topSupplierItems.map((s) => s.total_units), 1);
               return (
                 <div className="space-y-3">
-                  {topSuppliers.map((s, idx) => (
+                  {topSupplierItems.map((s, idx) => (
                     <div
                       key={s.supplier_id}
                       data-testid={`top-supplier-${s.supplier_id}`}
