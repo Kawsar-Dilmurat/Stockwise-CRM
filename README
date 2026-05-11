@@ -4,9 +4,9 @@ Stockwise is a cloud-deployed inventory management web application for small bus
 
 This repository uses a nested project structure. The main application source code is located in:
 
-```text
+
 Cloud_inventory-main/
-```
+
 
 ## Project Overview
 
@@ -36,19 +36,15 @@ Cldou_inventory_Stockwise/
 ## Main Application
 
 The main project files are organized under:
-
-```text
 Cloud_inventory-main/
-```
 
 Key folders:
 
-```text
 Cloud_inventory-main/frontend/   React frontend
 Cloud_inventory-main/backend/    FastAPI backend
 Cloud_inventory-main/docs/       Project screenshots and related assets
 Cloud_inventory-main/tests/      Test-related files
-```
+
 
 ## Cloud Deployment and CI
 
@@ -63,13 +59,12 @@ This project includes cloud deployment and CI/CD-related configuration:
 
 The CI workflow is located at:
 
-```text
+
 .github/workflows/ci.yml
-```
 
 The deployment runbook is located at:
 
-```text
+
 docs/deployment-runbook.md
 ```
 
@@ -77,15 +72,11 @@ docs/deployment-runbook.md
 
 For the full application README, see:
 
-```text
-Cloud_inventory-main/README.md
-```
 
 For deployment architecture, environment variables, validation steps, and rollback notes, see:
 
-```text
 docs/deployment-runbook.md
-```
+
 
 ## Current Project Status
 
