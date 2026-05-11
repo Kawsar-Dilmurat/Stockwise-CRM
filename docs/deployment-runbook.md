@@ -81,9 +81,9 @@ CORS_ORIGINS=https://main.d15p1084l9644y.amplifyapp.com
 
 `CORS_ORIGINS` restricts browser-based API access to the deployed Amplify frontend.
 
-## CI Workflow
+## CI and Smoke Test Workflows
 
-GitHub Actions workflow:
+GitHub Actions CI workflow:
 
 ```text
 .github/workflows/ci.yml
@@ -95,12 +95,27 @@ The CI workflow runs on:
 - Pull request to `main`
 - Manual trigger using `workflow_dispatch`
 
-Current checks:
+Current CI checks:
 
 - Frontend dependency installation
 - Frontend production build
 - Backend dependency installation
 - FastAPI backend import check
+
+Production smoke test workflow:
+
+```text
+.github/workflows/smoke-test.yml
+```
+
+The smoke test workflow is manually triggered with `workflow_dispatch`.
+
+Current smoke test checks:
+
+- `/api/health`
+- `/api/products`
+
+The smoke test is used after deployment or before sharing the live project link to confirm that the deployed backend is reachable and the core product API is responding.
 
 ## Production Validation Checklist
 
@@ -114,6 +129,8 @@ After deployment, validate the following:
 - Confirm Suppliers page loads supplier records
 - Confirm AI Insights page loads low-stock recommendations
 - Confirm `/api/health` returns `status: ok` and `database: true`
+- Run the manual `Production Smoke Test` workflow in GitHub Actions
+- Confirm the smoke test passes for `/api/health` and `/api/products`
 
 ## Known Limitation
 
@@ -145,6 +162,7 @@ If frontend data does not load:
 3. Check the Network tab for failed API requests.
 4. Verify the Render backend is awake.
 5. Confirm `/api/health` is working.
+6. Run the manual `Production Smoke Test` workflow to check deployed backend endpoints.
 
 ## Current Stable Deployment
 
@@ -154,5 +172,6 @@ The current stable deployment uses:
 - Render for FastAPI backend hosting
 - Neon PostgreSQL for persistent database storage
 - GitHub Actions for CI build and dependency checks
+- Manual production smoke test workflow for post-deployment API validation
 - Environment-based configuration for frontend API routing and backend database connectivity
 - Restricted CORS access from the Amplify frontend to the Render backend
