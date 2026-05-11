@@ -93,7 +93,7 @@ export default function Dashboard() {
       return Date.now() - soldAt.getTime() < 7 * 24 * 3600 * 1000;
     })
     .reduce((sum, sale) => sum + sale.quantity, 0);
-
+  const lowStockItems = Array.isArray(lowStock) ? lowStock : lowStock?.items ?? lowStock?.data ?? [];
   return (
     <div data-testid="dashboard-page" className="space-y-8">
       <div className="flex items-start justify-between flex-wrap gap-4">
@@ -128,7 +128,7 @@ export default function Dashboard() {
         <StatCard
           testid="stat-products"
           title="Products"
-          value={products?.length ?? "—"}
+          value={productList.length}
           icon={Boxes}
           accent="bg-zinc-900 text-zinc-50"
         />
@@ -143,7 +143,7 @@ export default function Dashboard() {
         <StatCard
           testid="stat-low-stock"
           title="Low-stock items"
-          value={lowStock?.count ?? "—"}
+          value={lowStockItems.length}
           icon={AlertTriangle}
           accent="bg-amber-500/15 text-amber-700"
           hint="Need reorder"
@@ -207,11 +207,11 @@ export default function Dashboard() {
               <Skeleton className="h-12 w-full" />
               <Skeleton className="h-12 w-full" />
             </div>
-          ) : lowStock.items.length === 0 ? (
+          ) : lowStockItems.length === 0 ? (
             <p className="text-zinc-500 text-sm">All products are at healthy stock levels.</p>
           ) : (
             <div className="divide-y">
-              {lowStock.items.slice(0, 5).map((item) => (
+              {lowStockItems.slice(0, 5).map((item) => (
                 <div
                   key={item.product_id}
                   data-testid={`low-stock-row-${item.product_id}`}
