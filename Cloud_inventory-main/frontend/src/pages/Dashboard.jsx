@@ -82,11 +82,17 @@ export default function Dashboard() {
     loadAI();
   }, []);
 
-  const totalStock = products?.reduce((s, p) => s + p.stock_qty, 0) ?? 0;
-  const sales7d = sales?.filter((s) => {
-    const d = new Date(s.sold_at);
-    return Date.now() - d.getTime() < 7 * 24 * 3600 * 1000;
-  }).reduce((sum, s) => sum + s.quantity, 0) ?? 0;
+  const productList = Array.isArray(products) ? products : products?.items ?? products?.data ?? [];
+  const salesList = Array.isArray(sales) ? sales : sales?.items ?? sales?.data ?? [];
+
+  const totalStock = productList.reduce((sum, product) => sum + product.stock_qty, 0);
+
+  const sales7d = salesList
+    .filter((sale) => {
+      const soldAt = new Date(sale.sold_at);
+      return Date.now() - soldAt.getTime() < 7 * 24 * 3600 * 1000;
+    })
+    .reduce((sum, sale) => sum + sale.quantity, 0);
 
   return (
     <div data-testid="dashboard-page" className="space-y-8">
