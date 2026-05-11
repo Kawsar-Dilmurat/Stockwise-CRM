@@ -1,0 +1,102 @@
+# Stockwise
+
+Stockwise is a cloud-deployed inventory management web application for small business inventory workflows.
+
+This repository uses a nested project structure. The main application source code is located in:
+
+```text
+Cloud_inventory-main/
+```
+
+## Project Overview
+
+Stockwise provides inventory management features including product catalog management, sales recording, restock tracking, supplier records, and rule-based inventory insights.
+
+The project is built as a full-stack web application with a React frontend, FastAPI backend, and PostgreSQL database.
+
+## Repository Structure
+
+```text
+Cldou_inventory_Stockwise/
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+├── docs/
+│   └── deployment-runbook.md
+├── Cloud_inventory-main/
+│   ├── frontend/
+│   ├── backend/
+│   ├── docs/
+│   ├── tests/
+│   ├── README.md
+│   └── docker-compose.yml
+└── .gitattributes
+```
+
+## Main Application
+
+The main project files are organized under:
+
+```text
+Cloud_inventory-main/
+```
+
+Key folders:
+
+```text
+Cloud_inventory-main/frontend/   React frontend
+Cloud_inventory-main/backend/    FastAPI backend
+Cloud_inventory-main/docs/       Project screenshots and related assets
+Cloud_inventory-main/tests/      Test-related files
+```
+
+## Cloud Deployment and CI
+
+This project includes cloud deployment and CI/CD-related configuration:
+
+- React frontend hosted on AWS Amplify
+- FastAPI backend hosted on Render
+- PostgreSQL database hosted on Neon
+- GitHub Actions workflow for CI checks
+- Environment-based configuration for frontend/backend connectivity
+- Restricted CORS configuration between the deployed frontend and backend
+
+The CI workflow is located at:
+
+```text
+.github/workflows/ci.yml
+```
+
+The deployment runbook is located at:
+
+```text
+docs/deployment-runbook.md
+```
+
+## Documentation
+
+For the full application README, see:
+
+```text
+Cloud_inventory-main/README.md
+```
+
+For deployment architecture, environment variables, validation steps, and rollback notes, see:
+
+```text
+docs/deployment-runbook.md
+```
+
+## Current Project Status
+
+The application has been deployed and validated with the following workflows:
+
+- Dashboard inventory overview
+- Product management
+- Sales recording
+- Restock recording
+- Supplier records
+- Inventory insights
+- Backend health check
+- Frontend/backend/database connectivity
+- GitHub Actions CI checks
