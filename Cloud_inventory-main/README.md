@@ -1,32 +1,33 @@
 # Stockwise — Inventory Management with AI Restock Insights
 
-Stockwise is a lightweight inventory management web app for small businesses. It tracks products, sales and restocks, flags items that need reordering using transparent rule-based metrics, and translates those metrics into natural-language restock recommendations through a pluggable AI layer.
+Stockwise is a lightweight inventory management web app for small businesses. It tracks products, sales, restocks, and suppliers in one place, then highlights items that may need attention using simple inventory rules and readable AI-style restock notes.
 
 ![Stockwise dashboard — KPIs, AI restock summary, low-stock list](docs/screenshots/dashboard.png)
 
 ## What problem it solves
 
-Small shops and side-business operators often juggle inventory in spreadsheets or by memory. Stockwise replaces that with a simple, structured workflow:
+Small shops and side-business operators often manage inventory through spreadsheets, memory, or scattered notes. Stockwise gives that workflow a more structured path:
 
-- every **outbound** movement (sale) is logged and decreases stock,
-- every **inbound** movement (restock) is logged, optionally linked to a supplier, and increases stock,
-- the system continuously computes reorder signals (days-of-cover, urgency tier, suggested quantity), and
-- the AI layer turns those signals into short, readable restock advice — the AI layer turns those signals into short, readable restock advice.
+- sales are recorded as outbound stock movements,
+- restocks are recorded as inbound stock movements,
+- suppliers can be linked to restock history,
+- low-stock items are flagged using explainable rules, and
+- restock recommendations are written in plain language so the numbers are easier to act on.
 
-No forecasting black boxes, no procurement workflows — just a clean, explainable loop.
+The goal is not to replace a full ERP system. It is a practical inventory dashboard for a small operator who wants to understand what is in stock, what is running low, and what should be reordered next.
 
 ## Core features
 
-- **Products** — CRUD with name, SKU (unique), category, stock quantity, reorder threshold.
-- **Sales (stock-out)** — recording a sale automatically decrements stock and rejects the request when stock is insufficient.
-- **Restocks (stock-in)** — recording a restock automatically increments stock, with an optional note and an optional supplier link; filter the history by supplier.
-- **Suppliers** — minimal directory (name + optional contact) so you can tag each restock with who supplied it. Includes a `top suppliers` aggregation used on the dashboard.
-- **Rule-based insights** — for every product the backend computes: 7-day sales, average daily sales, estimated days of stock left, reorder flag, suggested reorder qty (~14 days of cover) and a structured `urgency` tier (`HEALTHY` / `WATCH` / `LOW` / `MODERATE` / `HIGH` / `CRITICAL`).
-- **AI restock narration** — per-product recommendations and a daily briefing, produced by an `AIProvider` interface (mock implementation ships by default; swap in any LLM by adding one subclass).
-- **Health endpoint** — `GET /api/health` verifies database connectivity.
-- **Demo data** — 8 products, a week of randomised sales and a few seeded restocks + 3 sample suppliers so the dashboard is useful on first run.
+- **Products** — create, view, update, and delete products with name, SKU, category, stock quantity, and reorder threshold.
+- **Sales tracking** — recording a sale automatically decreases stock and prevents sales when stock is insufficient.
+- **Restock tracking** — recording a restock automatically increases stock, with optional supplier and note fields.
+- **Suppliers** — lightweight supplier directory with top-supplier aggregation based on restock history.
+- **Rule-based inventory insights** — the backend calculates 7-day sales, average daily sales, estimated days left, reorder flags, suggested reorder quantity, and urgency tier.
+- **AI-style restock narration** — structured inventory metrics are converted into short, readable recommendations through a swappable `AIProvider` layer.
+- **Health check** — `/api/health` verifies backend availability and database connectivity.
+- **Seed data** — the app includes demo products, sales, restocks, and suppliers so the dashboard is useful immediately after setup.
 
-> **Note on AI:** Stockwise uses *rule-based metrics + AI narration*, not ML forecasting. All numeric decisions happen in `inventory_service.py`; the AI layer only turns those structured numbers into readable text. This keeps recommendations explainable and safe.
+> **Note on AI:** Stockwise uses rule-based inventory metrics first. The AI layer only turns those structured numbers into readable restock notes. This keeps the recommendation logic easier to inspect and explain.
 
 ## Screenshots
 
@@ -36,56 +37,134 @@ No forecasting black boxes, no procurement workflows — just a clean, explainab
 
 ## Tech stack
 
-- **Backend:** Python 3.11, FastAPI, SQLAlchemy 2.0 (async), asyncpg, Pydantic v2
-- **Database:** PostgreSQL 15
 - **Frontend:** React 19, Tailwind CSS, shadcn/ui, axios, React Router
-- **Containerisation:** Docker + docker-compose
+- **Backend:** Python 3.11, FastAPI, SQLAlchemy 2.0 async, asyncpg, Pydantic v2
+- **Database:** PostgreSQL locally, Neon PostgreSQL in production
+- **Cloud deployment:** AWS Amplify Hosting, Render Web Service, Neon PostgreSQL
+- **CI/CD:** GitHub Actions, Amplify auto-deploy, Render auto-deploy
+- **Containerization:** Docker and docker-compose for local development
+
+## Cloud deployment
+
+Stockwise is deployed as a full-stack cloud application:
+
+```text
+User Browser
+    |
+    v
+AWS Amplify Hosting
+React Frontend
+    |
+    | REST API
+    v
+Render Web Service
+FastAPI Backend
+    |
+    | SQLAlchemy / asyncpg
+    v
+Neon PostgreSQL
+Managed Database
+```
+
+The frontend is hosted on AWS Amplify. The backend is hosted as a Render Web Service. The backend connects to a managed Neon PostgreSQL database.
+
+Production configuration is handled through environment variables:
+
+- `REACT_APP_BACKEND_URL` on Amplify points the frontend to the Render backend.
+- `DATABASE_URL` on Render connects the backend to Neon PostgreSQL.
+- `CORS_ORIGINS` on Render restricts browser API access to the deployed Amplify frontend.
+
+## CI/CD and deployment checks
+
+This project includes GitHub Actions workflows for basic deployment confidence:
+
+- `Stockwise CI` runs frontend build checks and backend dependency/import checks.
+- `Production Smoke Test` can be triggered manually to verify deployed API availability.
+
+The CI workflow checks:
+
+- frontend dependency installation,
+- frontend production build,
+- backend dependency installation,
+- FastAPI backend import.
+
+The smoke test checks the deployed backend endpoints:
+
+- `/api/health`
+- `/api/products`
+
+This is intentionally lightweight. The goal is to catch obvious build or deployment problems without adding expensive infrastructure or overcomplicating the project.
+
+## Production notes
+
+The backend is currently hosted on Render Free. If the service has been inactive, the first request can take around 20-50 seconds while the instance wakes up. After that, the app usually responds normally.
+
+The production deployment has been validated across:
+
+- Dashboard inventory metrics
+- Products page
+- Record Sale workflow
+- Record Restock workflow
+- Suppliers page
+- AI Insights page
+- Backend health check
+- Frontend/backend/database connectivity
+
+A deployment runbook is available at:
+
+```text
+../docs/deployment-runbook.md
+```
 
 ## Architecture summary
 
-```
-  Frontend (React + shadcn/ui)
-          │  JSON over HTTPS
-          ▼
-  FastAPI  ──►  /api/products       (CRUD)
-                /api/sales          (stock-out)
-                /api/restocks       (stock-in, optional supplier)
-                /api/suppliers      (directory + top-suppliers aggregation)
-                /api/insights/...   (rule-based metrics + AI narration)
-                /api/health
-          │
-          ▼
-  inventory_service.py   → calculates days-of-cover, urgency tier, reorder qty
-  ai_service.py          → AIProvider interface + MockAIProvider (swappable)
-          │
-          ▼
-  PostgreSQL
-    products   1──N  sales
-    products   1──N  restocks   N──1  suppliers
+```text
+Frontend (React + shadcn/ui)
+        |
+        | JSON over HTTPS
+        v
+FastAPI Backend
+        |
+        +-- /api/products       Product CRUD
+        +-- /api/sales          Stock-out workflow
+        +-- /api/restocks       Stock-in workflow
+        +-- /api/suppliers      Supplier directory and top-supplier aggregation
+        +-- /api/insights/...   Rule-based metrics and AI-style narration
+        +-- /api/health         Health and database check
+        |
+        v
+PostgreSQL
 ```
 
-Layered cleanly: routes → services → models. Numbers live in services, narration lives in the AI layer, persistence lives in models.
+The backend follows a simple layered structure:
+
+```text
+routes → services → models
+```
+
+Inventory calculations live in the service layer. AI narration lives behind the `AIProvider` interface. Persistence is handled through SQLAlchemy models.
 
 ## Project structure
 
-```
+```text
 .
 ├── backend/
 │   ├── app/
 │   │   ├── db/session.py            # async engine + session factory
-│   │   ├── models/                  # SQLAlchemy models (Product, Sale, Restock, Supplier)
+│   │   ├── models/                  # SQLAlchemy models
 │   │   ├── schemas/                 # Pydantic schemas
 │   │   ├── routes/                  # FastAPI route modules
 │   │   ├── services/
-│   │   │   ├── inventory_service.py # rule-based math
+│   │   │   ├── inventory_service.py # rule-based inventory metrics
 │   │   │   └── ai_service.py        # AIProvider interface + MockAIProvider
 │   │   └── utils/seed.py            # demo data seeder
 │   ├── server.py                    # FastAPI entrypoint
 │   ├── Dockerfile
 │   ├── requirements.txt
 │   └── .env.example
-├── frontend/                        # React app (Dashboard, Products, Sale, Restock, Suppliers, AI Insights)
-├── docker-compose.yml               # postgres + backend
+├── frontend/                        # React app
+├── docs/screenshots/                # screenshots used in README
+├── docker-compose.yml               # local PostgreSQL + backend
 └── README.md
 ```
 
@@ -100,86 +179,101 @@ All endpoints are prefixed with `/api`.
 | POST   | `/api/products`                         | Create a product                         |
 | GET    | `/api/products/{id}`                    | Get one product                          |
 | PUT    | `/api/products/{id}`                    | Update a product                         |
-| DELETE | `/api/products/{id}`                    | Delete a product (cascades sales)        |
+| DELETE | `/api/products/{id}`                    | Delete a product                         |
 | GET    | `/api/sales`                            | List recent sales                        |
-| POST   | `/api/sales`                            | Record a sale (auto-decrements stock)    |
+| POST   | `/api/sales`                            | Record a sale and decrement stock        |
 | GET    | `/api/sales/product/{id}`               | Sales for one product                    |
 | GET    | `/api/restocks?supplier_id=N`           | List restocks, optional supplier filter  |
-| POST   | `/api/restocks`                         | Record a restock (auto-increments stock) |
+| POST   | `/api/restocks`                         | Record a restock and increment stock     |
 | GET    | `/api/restocks/product/{id}`            | Restocks for one product                 |
 | GET    | `/api/suppliers`                        | List suppliers                           |
 | POST   | `/api/suppliers`                        | Create a supplier                        |
 | GET    | `/api/suppliers/{id}`                   | Get one supplier                         |
 | PUT    | `/api/suppliers/{id}`                   | Update a supplier                        |
-| DELETE | `/api/suppliers/{id}`                   | Delete a supplier (restock history kept) |
+| DELETE | `/api/suppliers/{id}`                   | Delete a supplier                        |
 | GET    | `/api/suppliers/top?limit=N`            | Top suppliers by total units supplied    |
 | GET    | `/api/insights/all`                     | Insights for every product               |
 | GET    | `/api/insights/low-stock`               | Items flagged for reorder                |
 | GET    | `/api/insights/product/{id}`            | Insight for one product                  |
-| POST   | `/api/insights/product/{id}/ai-summary` | AI restock recommendation per product    |
-| POST   | `/api/insights/daily-ai-summary`        | AI daily low-stock summary               |
+| POST   | `/api/insights/product/{id}/ai-summary` | AI-style restock note for one product    |
+| POST   | `/api/insights/daily-ai-summary`        | Daily low-stock summary                  |
 
-## How the AI insight feature works
+## How the insight feature works
 
-1. **Rule-based math first.** `inventory_service.compute_product_insight()` calculates:
-   - `recent_7_day_sales` — sum of `quantity` from `sales` table over last 7 days
-   - `avg_daily_sales` = `recent_7_day_sales / 7`
-   - `estimated_days_left` = `stock_qty / avg_daily_sales` (None when divisor is 0)
-   - `reorder_flag` = `stock_qty <= reorder_threshold` OR `estimated_days_left <= 5`
-   - `suggested_reorder_qty` = `ceil(avg_daily_sales × 14) - stock_qty`, clamped at 0
-   - `urgency` ∈ `HEALTHY | WATCH | LOW | MODERATE | HIGH | CRITICAL`
+1. **Rule-based metrics first.** `inventory_service.compute_product_insight()` calculates:
+   - `recent_7_day_sales`
+   - `avg_daily_sales`
+   - `estimated_days_left`
+   - `reorder_flag`
+   - `suggested_reorder_qty`
+   - `urgency`
 
-2. **AI narration only.** The structured `ProductInsight` is passed to an `AIProvider`:
+2. **Narration second.** The structured `ProductInsight` is passed to an `AIProvider`:
+
    ```python
    provider = get_ai_provider()
    text = provider.restock_recommendation(insight)
    ```
-   The provider returns a short natural-language string. The default `MockAIProvider` uses deterministic templated prose — no external calls.
 
-3. **Swapping to a real LLM.** Subclass `AIProvider` in `app/services/ai_service.py`, register it in `get_ai_provider()`, and set `AI_PROVIDER` in `.env`. No route or frontend change required.
+   The default `MockAIProvider` returns deterministic text and does not call an external model.
+
+3. **Swappable provider design.** A real LLM can be added by subclassing `AIProvider` in `app/services/ai_service.py`, registering it in `get_ai_provider()`, and setting the provider through environment configuration.
 
 ## Run locally
 
-### Option A — Docker Compose (recommended)
+### Option A — Docker Compose
 
 ```bash
 docker compose up --build
 ```
 
-- Backend on http://localhost:8001
-- Postgres on `localhost:5432`
-- Tables are created automatically on first boot and demo data is seeded when empty.
+- Backend: http://localhost:8001
+- PostgreSQL: localhost:5432
+- Tables are created automatically on startup.
+- Demo data is seeded when the database is empty.
 
-### Option B — Local dev (no Docker)
+### Option B — Local development without Docker
 
-Prereqs: Python 3.11, Node 18+, PostgreSQL 15.
+Prerequisites:
+
+- Python 3.11
+- Node 18+
+- PostgreSQL 15
 
 ```bash
 # 1. Database
 createdb inventory_db
-createuser inventory_user --pwprompt          # password: inventory_pass
+createuser inventory_user --pwprompt
 psql inventory_db -c "GRANT ALL ON SCHEMA public TO inventory_user;"
 
 # 2. Backend
 cd backend
-python -m venv .venv && source .venv/bin/activate
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env                          # edit DATABASE_URL if needed
+cp .env.example .env
 uvicorn server:app --reload --port 8001
 
 # 3. Frontend
-cd frontend
-yarn install
-cp .env.example .env                          # defaults to http://localhost:8001
-yarn start
+cd ../frontend
+npm install
+cp .env.example .env
+npm start
 ```
 
 Open http://localhost:3000 in your browser.
 
-### Environment variables
+## Environment variables
 
-See `backend/.env.example` and `frontend/.env.example`. Both are safe to commit; real `.env` files are gitignored.
+See:
+
+```text
+backend/.env.example
+frontend/.env.example
+```
+
+Real `.env` files should not be committed.
 
 ## License
 
-MIT.
+MIT
