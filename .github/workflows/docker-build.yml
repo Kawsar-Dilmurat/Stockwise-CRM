@@ -1,0 +1,28 @@
+name: Docker Build Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  docker-build:
+    name: Build Docker images
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check Docker Compose config
+        run: docker compose -f Cloud_inventory-main/docker-compose.yml config
+
+      - name: Build backend Docker image
+        run: docker build -t stockwise-backend:ci Cloud_inventory-main/backend
+
+      - name: Build frontend Docker image
+        run: docker build -t stockwise-frontend:ci Cloud_inventory-main/frontend
