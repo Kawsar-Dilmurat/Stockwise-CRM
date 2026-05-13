@@ -42,7 +42,7 @@ The goal is not to replace a full ERP system. It is a practical inventory dashbo
 - **Database:** PostgreSQL locally, Neon PostgreSQL in production
 - **Cloud deployment:** AWS Amplify Hosting, Render Web Service, Neon PostgreSQL
 - **CI/CD:** GitHub Actions, Amplify auto-deploy, Render auto-deploy
-- **Containerization:** Docker and docker-compose for local development
+- **Containerization:** Docker, docker-compose, frontend/backend Dockerfiles, and GitHub Actions Docker build validation
 
 ## Cloud deployment
 
@@ -79,6 +79,7 @@ Production configuration is handled through environment variables:
 This project includes GitHub Actions workflows for basic deployment confidence:
 
 - `Stockwise CI` runs frontend build checks and backend dependency/import checks.
+- `Docker Build Check` validates the backend and frontend Docker images in GitHub Actions.
 - `Production Smoke Test` can be triggered manually to verify deployed API availability.
 
 The CI workflow checks:
@@ -86,7 +87,10 @@ The CI workflow checks:
 - frontend dependency installation,
 - frontend production build,
 - backend dependency installation,
-- FastAPI backend import.
+- FastAPI backend import,
+- Docker Compose configuration validation,
+- backend Docker image build,
+- frontend Docker image build.
 
 The smoke test checks the deployed backend endpoints:
 
