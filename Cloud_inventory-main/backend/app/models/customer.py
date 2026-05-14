@@ -25,3 +25,8 @@ class Customer(Base):
         back_populates="customer",
         passive_deletes=True,
     )
+    activities = relationship(
+        "Activity",
+        back_populates="customer",
+        passive_deletes=True,
+    )

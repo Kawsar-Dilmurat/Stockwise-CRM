@@ -45,3 +45,8 @@ class Lead(Base):
     )
 
     customer = relationship("Customer", back_populates="leads")
+    activities = relationship(
+        "Activity",
+        back_populates="lead",
+        passive_deletes=True,
+    )
