@@ -22,6 +22,7 @@ from app.db.session import Base, engine  # noqa: E402
 from app.models import Activity, Customer, Lead, Product, Restock, Sale, Supplier  # noqa: E402,F401
 from app.routes import (  # noqa: E402
     activities,
+    crm_dashboard,
     customers,
     health,
     insights,
@@ -76,6 +77,7 @@ api_router.include_router(suppliers.router)
 api_router.include_router(customers.router)
 api_router.include_router(leads.router)
 api_router.include_router(activities.router)
+api_router.include_router(crm_dashboard.router)
 api_router.include_router(insights.router)
 
 app.include_router(api_router)
