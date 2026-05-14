@@ -1,6 +1,7 @@
 """Customer SQLAlchemy model — CRM contact tracking."""
 from datetime import datetime, timezone
 from sqlalchemy import Column, DateTime, Integer, String
+from sqlalchemy.orm import relationship
 from app.db.session import Base
 
 
@@ -17,4 +18,10 @@ class Customer(Base):
         DateTime(timezone=True),
         nullable=False,
         default=lambda: datetime.now(timezone.utc),
+    )
+
+    leads = relationship(
+        "Lead",
+        back_populates="customer",
+        passive_deletes=True,
     )

@@ -19,11 +19,12 @@ logging.basicConfig(
 logger = logging.getLogger("inventory")
 
 from app.db.session import Base, engine  # noqa: E402
-from app.models import Customer, Product, Restock, Sale, Supplier  # noqa: E402,F401
+from app.models import Customer, Lead, Product, Restock, Sale, Supplier  # noqa: E402,F401
 from app.routes import (  # noqa: E402
     customers,
     health,
     insights,
+    leads,
     products,
     restocks,
     sales,
@@ -72,6 +73,7 @@ api_router.include_router(sales.router)
 api_router.include_router(restocks.router)
 api_router.include_router(suppliers.router)
 api_router.include_router(customers.router)
+api_router.include_router(leads.router)
 api_router.include_router(insights.router)
 
 app.include_router(api_router)
