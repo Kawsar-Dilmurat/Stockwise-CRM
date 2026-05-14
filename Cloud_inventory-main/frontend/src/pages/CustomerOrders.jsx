@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { customersApi, leadsApi, activitiesApi, crmApi } from "@/lib/api";
+import { customersApi, leadsApi, activitiesApi, crmApi, salesApi, productsApi } from "@/lib/api";
 import {
   Users, DollarSign, Calendar, CheckCircle2, XCircle, BarChart2, PieChart,
   Package, Plus, RefreshCcw, ClipboardList, Clock, TrendingUp,
@@ -72,21 +72,27 @@ export default function CustomerOrders() {
   const [customers, setCustomers] = useState(null);
   const [leads, setLeads] = useState(null);
   const [activities, setActivities] = useState(null);
+  const [sales, setSales] = useState(null);
+  const [products, setProducts] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
 
   const load = async () => {
     try {
-      const [dash, custs, ls, acts] = await Promise.all([
+      const [dash, custs, ls, acts, sl, prods] = await Promise.all([
         crmApi.dashboard(),
         customersApi.list(),
         leadsApi.list(),
         activitiesApi.list(),
+        salesApi.list(),
+        productsApi.list(),
       ]);
       setDashboard(dash);
       setCustomers(Array.isArray(custs) ? custs : custs?.items ?? custs?.data ?? []);
       setLeads(Array.isArray(ls) ? ls : ls?.items ?? ls?.data ?? []);
       setActivities(Array.isArray(acts) ? acts : acts?.items ?? acts?.data ?? []);
+      setSales(Array.isArray(sl) ? sl : sl?.items ?? sl?.data ?? []);
+      setProducts(Array.isArray(prods) ? prods : prods?.items ?? prods?.data ?? []);
     } catch {
       toast.error("Failed to load customer orders data");
     }
@@ -242,34 +248,260 @@ export default function CustomerOrders() {
         />
       </div>
 
-      {/* Visual Insights placeholder section */}
+      {/* Pipeline Analytics */}
       <div>
         <h2 className="text-base font-semibold text-zinc-700 mb-3">Pipeline Analytics</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          {[
-            { icon: PieChart, title: "Order Outcome Breakdown", desc: "Won vs. Lost distribution" },
-            { icon: DollarSign, title: "Order Value Breakdown", desc: "Revenue by stage" },
-            { icon: BarChart2, title: "Opportunity Stage Breakdown", desc: "Pipeline stage counts" },
-            { icon: Clock, title: "Follow-up Status", desc: "Pending vs. completed" },
-            { icon: Package, title: "Best-Selling Products", desc: "Top inquired products" },
-          ].map(({ icon: Icon, title, desc }) => (
-            <Card key={title} className="border-zinc-200">
-              <CardContent className="pt-5 pb-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-7 h-7 rounded-md bg-zinc-100 flex items-center justify-center shrink-0">
-                    <Icon className="w-3.5 h-3.5 text-zinc-400" />
+
+          {/* 1. Order Outcome Breakdown */}
+          {(() => {
+            const won  = leadList.filter((l) => l.stage === "WON");
+            const lost = leadList.filter((l) => l.stage === "LOST");
+            const wonVal  = won.reduce((s, l) => s + (l.estimated_value ?? 0), 0);
+            const lostVal = lost.reduce((s, l) => s + (l.estimated_value ?? 0), 0);
+            const denom   = won.length + lost.length;
+            const winRate = denom > 0 ? Math.round((won.length / denom) * 100) : null;
+            const maxVal  = Math.max(wonVal, lostVal, 1);
+            return (
+              <Card className="border-zinc-200">
+                <CardContent className="pt-5 pb-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-7 h-7 rounded-md bg-zinc-100 flex items-center justify-center shrink-0">
+                      <PieChart className="w-3.5 h-3.5 text-zinc-400" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-zinc-800 leading-tight">Order Outcome</div>
+                      <div className="text-xs text-zinc-400">Won vs. Lost</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-sm font-medium text-zinc-800 leading-tight">{title}</div>
-                    <div className="text-xs text-zinc-400">{desc}</div>
+                  <div className="space-y-2.5">
+                    <div>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="text-emerald-700 font-medium">Won · {won.length}</span>
+                        <span className="text-zinc-500">{fmt$(wonVal)}</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-zinc-100 overflow-hidden">
+                        <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${(wonVal / maxVal) * 100}%` }} />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="text-red-600 font-medium">Lost · {lost.length}</span>
+                        <span className="text-zinc-500">{fmt$(lostVal)}</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-zinc-100 overflow-hidden">
+                        <div className="h-full bg-red-400 rounded-full" style={{ width: `${(lostVal / maxVal) * 100}%` }} />
+                      </div>
+                    </div>
+                    {winRate !== null && (
+                      <div className="pt-1 border-t border-zinc-100 flex justify-between items-center">
+                        <span className="text-xs text-zinc-500">Win rate</span>
+                        <Badge variant="outline" className="border-emerald-500/40 text-emerald-700 bg-emerald-500/10 text-xs">
+                          {winRate}%
+                        </Badge>
+                      </div>
+                    )}
+                    {winRate === null && (
+                      <p className="text-xs text-zinc-400 pt-1">No closed deals yet.</p>
+                    )}
                   </div>
-                </div>
-                <div className="h-14 rounded-md bg-zinc-50 border border-zinc-100 flex items-center justify-center">
-                  <span className="text-xs text-zinc-400">Chart coming soon</span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })()}
+
+          {/* 2. Order Value Breakdown by stage */}
+          {(() => {
+            const OPEN_STAGES = ["NEW", "CONTACTED", "QUALIFIED", "PROPOSAL"];
+            const stageVals = OPEN_STAGES.map((stage) => ({
+              stage,
+              value: leadList
+                .filter((l) => l.stage === stage)
+                .reduce((s, l) => s + (l.estimated_value ?? 0), 0),
+            }));
+            const maxVal = Math.max(...stageVals.map((s) => s.value), 1);
+            const STAGE_BAR = {
+              NEW:       "bg-sky-400",
+              CONTACTED: "bg-blue-400",
+              QUALIFIED: "bg-amber-400",
+              PROPOSAL:  "bg-orange-400",
+            };
+            return (
+              <Card className="border-zinc-200">
+                <CardContent className="pt-5 pb-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-7 h-7 rounded-md bg-zinc-100 flex items-center justify-center shrink-0">
+                      <DollarSign className="w-3.5 h-3.5 text-zinc-400" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-zinc-800 leading-tight">Value by Stage</div>
+                      <div className="text-xs text-zinc-400">Open pipeline</div>
+                    </div>
+                  </div>
+                  <div className="space-y-2.5">
+                    {stageVals.map(({ stage, value }) => (
+                      <div key={stage}>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-zinc-600 font-medium">{stage}</span>
+                          <span className="text-zinc-500">{value ? fmt$(value) : "—"}</span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-zinc-100 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${STAGE_BAR[stage]}`}
+                            style={{ width: `${(value / maxVal) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })()}
+
+          {/* 3. Opportunity Stage Breakdown — counts */}
+          {(() => {
+            const ALL_STAGES = ["NEW", "CONTACTED", "QUALIFIED", "PROPOSAL", "WON", "LOST"];
+            const total = Math.max(leadList.length, 1);
+            const stageCounts = ALL_STAGES.map((stage) => ({
+              stage,
+              count: leadList.filter((l) => l.stage === stage).length,
+            }));
+            return (
+              <Card className="border-zinc-200">
+                <CardContent className="pt-5 pb-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-7 h-7 rounded-md bg-zinc-100 flex items-center justify-center shrink-0">
+                      <BarChart2 className="w-3.5 h-3.5 text-zinc-400" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-zinc-800 leading-tight">Stage Breakdown</div>
+                      <div className="text-xs text-zinc-400">All opportunities</div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    {stageCounts.map(({ stage, count }) => (
+                      <div key={stage} className="flex items-center gap-2">
+                        <Badge
+                          variant="outline"
+                          className={`${STAGE_STYLES[stage] ?? ""} text-[10px] px-1.5 py-0 shrink-0 w-20 justify-center`}
+                        >
+                          {stage}
+                        </Badge>
+                        <div className="flex-1 h-1.5 rounded-full bg-zinc-100 overflow-hidden">
+                          <div
+                            className="h-full bg-zinc-400 rounded-full"
+                            style={{ width: `${(count / total) * 100}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-zinc-500 tabular-nums w-4 text-right">{count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })()}
+
+          {/* 4. Follow-up Status */}
+          {(() => {
+            const now = new Date();
+            const pending   = activityList.filter((a) => !a.completed);
+            const completed = activityList.filter((a) => a.completed);
+            const overdue   = pending.filter((a) => a.due_date && new Date(a.due_date) < now);
+            const total     = Math.max(activityList.length, 1);
+            const rows = [
+              { label: "Pending",   count: pending.length,   bar: "bg-amber-400",   text: "text-amber-700"  },
+              { label: "Completed", count: completed.length, bar: "bg-emerald-500", text: "text-emerald-700" },
+              { label: "Overdue",   count: overdue.length,   bar: "bg-red-400",     text: "text-red-600"    },
+            ];
+            return (
+              <Card className="border-zinc-200">
+                <CardContent className="pt-5 pb-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-7 h-7 rounded-md bg-zinc-100 flex items-center justify-center shrink-0">
+                      <Clock className="w-3.5 h-3.5 text-zinc-400" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-zinc-800 leading-tight">Follow-up Status</div>
+                      <div className="text-xs text-zinc-400">Activity breakdown</div>
+                    </div>
+                  </div>
+                  <div className="space-y-2.5">
+                    {rows.map(({ label, count, bar, text }) => (
+                      <div key={label}>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className={`font-medium ${text}`}>{label}</span>
+                          <span className="text-zinc-500 tabular-nums">{count}</span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-zinc-100 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${bar}`}
+                            style={{ width: `${(count / total) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                    {activityList.length === 0 && (
+                      <p className="text-xs text-zinc-400">No activities recorded yet.</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })()}
+
+          {/* 5. Best-Selling Products */}
+          {(() => {
+            const salesList  = sales ?? [];
+            const productList2 = products ?? [];
+            const productMap2 = Object.fromEntries(productList2.map((p) => [p.id, p]));
+            const totals = {};
+            salesList.forEach(({ product_id, quantity }) => {
+              totals[product_id] = (totals[product_id] ?? 0) + quantity;
+            });
+            const top5 = Object.entries(totals)
+              .sort((a, b) => b[1] - a[1])
+              .slice(0, 5)
+              .map(([id, qty]) => ({ name: productMap2[Number(id)]?.name ?? `#${id}`, qty }));
+            const maxQty = Math.max(...top5.map((p) => p.qty), 1);
+            return (
+              <Card className="border-zinc-200">
+                <CardContent className="pt-5 pb-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-7 h-7 rounded-md bg-zinc-100 flex items-center justify-center shrink-0">
+                      <Package className="w-3.5 h-3.5 text-zinc-400" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-zinc-800 leading-tight">Best-Selling</div>
+                      <div className="text-xs text-zinc-400">Top products by units</div>
+                    </div>
+                  </div>
+                  {top5.length === 0 ? (
+                    <p className="text-xs text-zinc-400">No sales recorded yet.</p>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {top5.map(({ name, qty }, idx) => (
+                        <div key={idx}>
+                          <div className="flex justify-between text-xs mb-1">
+                            <span className="text-zinc-700 font-medium truncate max-w-[7rem]">{name}</span>
+                            <span className="text-zinc-500 tabular-nums shrink-0 ml-1">{qty} units</span>
+                          </div>
+                          <div className="h-1.5 rounded-full bg-zinc-100 overflow-hidden">
+                            <div
+                              className="h-full bg-sky-500 rounded-full"
+                              style={{ width: `${(qty / maxQty) * 100}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })()}
+
         </div>
       </div>
 
