@@ -1,11 +1,12 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, Package, ShoppingCart, Sparkles, Boxes, PackagePlus, Truck } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, Sparkles, Boxes, PackagePlus, Truck, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const links = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, testid: "nav-dashboard" },
   { to: "/products", label: "Products", icon: Package, testid: "nav-products" },
   { to: "/sales", label: "Record Sale", icon: ShoppingCart, testid: "nav-sales" },
+  { to: "/customer-orders", label: "Customer Orders", icon: ClipboardList, testid: "nav-customer-orders" },
   { to: "/restocks", label: "Record Restock", icon: PackagePlus, testid: "nav-restocks" },
   { to: "/suppliers", label: "Suppliers", icon: Truck, testid: "nav-suppliers" },
   { to: "/insights", label: "AI Insights", icon: Sparkles, testid: "nav-insights" },

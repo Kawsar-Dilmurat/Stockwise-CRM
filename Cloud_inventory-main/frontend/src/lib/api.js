@@ -50,4 +50,35 @@ export const healthApi = {
   check: () => client.get("/health").then((r) => r.data),
 };
 
+export const customersApi = {
+  list:   ()            => client.get("/customers").then((r) => r.data),
+  get:    (id)          => client.get(`/customers/${id}`).then((r) => r.data),
+  create: (payload)     => client.post("/customers", payload).then((r) => r.data),
+  update: (id, payload) => client.put(`/customers/${id}`, payload).then((r) => r.data),
+  remove: (id)          => client.delete(`/customers/${id}`).then((r) => r.data),
+};
+
+export const leadsApi = {
+  list:        ()           => client.get("/leads").then((r) => r.data),
+  forCustomer: (customerId) => client.get(`/leads/customer/${customerId}`).then((r) => r.data),
+  get:         (id)         => client.get(`/leads/${id}`).then((r) => r.data),
+  create:      (payload)    => client.post("/leads", payload).then((r) => r.data),
+  update:      (id, payload) => client.put(`/leads/${id}`, payload).then((r) => r.data),
+  remove:      (id)         => client.delete(`/leads/${id}`).then((r) => r.data),
+};
+
+export const activitiesApi = {
+  list:        ()           => client.get("/activities").then((r) => r.data),
+  forCustomer: (customerId) => client.get(`/activities/customer/${customerId}`).then((r) => r.data),
+  forLead:     (leadId)     => client.get(`/activities/lead/${leadId}`).then((r) => r.data),
+  create:      (payload)    => client.post("/activities", payload).then((r) => r.data),
+  update:      (id, payload) => client.put(`/activities/${id}`, payload).then((r) => r.data),
+  complete:    (id)         => client.patch(`/activities/${id}/complete`).then((r) => r.data),
+  remove:      (id)         => client.delete(`/activities/${id}`).then((r) => r.data),
+};
+
+export const crmApi = {
+  dashboard: () => client.get("/crm/dashboard").then((r) => r.data),
+};
+
 export default client;

@@ -8,6 +8,7 @@ import RecordSale from "@/pages/RecordSale";
 import RecordRestock from "@/pages/RecordRestock";
 import Suppliers from "@/pages/Suppliers";
 import Insights from "@/pages/Insights";
+import CustomerOrders from "./pages/CustomerOrders";
 import { LayoutDashboard, Package, ShoppingCart, Sparkles, PackagePlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -59,6 +60,7 @@ export default function App() {
             <Route path="/restocks" element={<RecordRestock />} />
             <Route path="/suppliers" element={<Suppliers />} />
             <Route path="/insights" element={<Insights />} />
+            <Route path="/customer-orders" element={<CustomerOrders />} />
           </Routes>
         </main>
         <MobileNav />
