@@ -14,6 +14,10 @@ class LeadBase(BaseModel):
     owner: Optional[str] = Field(None, max_length=255)
     next_follow_up_date: Optional[datetime] = None
     notes: Optional[str] = Field(None, max_length=1000)
+    product_id: Optional[int] = None
+    quantity: Optional[int] = None
+    discount: Optional[int] = None
+    delivery_fee: Optional[int] = None
 
 
 class LeadCreate(LeadBase):
@@ -30,6 +34,10 @@ class LeadUpdate(BaseModel):
     owner: Optional[str] = Field(None, max_length=255)
     next_follow_up_date: Optional[datetime] = None
     notes: Optional[str] = Field(None, max_length=1000)
+    product_id: Optional[int] = None
+    quantity: Optional[int] = None
+    discount: Optional[int] = None
+    delivery_fee: Optional[int] = None
 
 
 class LeadOut(LeadBase):

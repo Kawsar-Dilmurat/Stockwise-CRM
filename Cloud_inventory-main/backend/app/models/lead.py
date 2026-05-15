@@ -32,6 +32,11 @@ class Lead(Base):
     owner = Column(String(255), nullable=True)
     next_follow_up_date = Column(DateTime(timezone=True), nullable=True)
     notes = Column(String(1000), nullable=True)
+    # Quote fields — intentionally plain INTEGER (no FK constraint) to keep migrations safe.
+    product_id = Column(Integer, nullable=True)
+    quantity = Column(Integer, nullable=True)
+    discount = Column(Integer, nullable=True)
+    delivery_fee = Column(Integer, nullable=True)
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,

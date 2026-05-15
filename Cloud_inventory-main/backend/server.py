@@ -51,6 +51,19 @@ async def lifespan(_app: FastAPI):
         await conn.execute(
             text("ALTER TABLE products ADD COLUMN IF NOT EXISTS unit_price INTEGER")
         )
+        # Quote fields on leads — plain INTEGER, no FK constraint for demo safety.
+        await conn.execute(
+            text("ALTER TABLE leads ADD COLUMN IF NOT EXISTS product_id INTEGER")
+        )
+        await conn.execute(
+            text("ALTER TABLE leads ADD COLUMN IF NOT EXISTS quantity INTEGER")
+        )
+        await conn.execute(
+            text("ALTER TABLE leads ADD COLUMN IF NOT EXISTS discount INTEGER")
+        )
+        await conn.execute(
+            text("ALTER TABLE leads ADD COLUMN IF NOT EXISTS delivery_fee INTEGER")
+        )
     logger.info("db.tables.ready")
     await seed_if_empty()
     yield
