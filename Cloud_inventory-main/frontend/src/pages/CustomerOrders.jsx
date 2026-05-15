@@ -65,6 +65,7 @@ const EMPTY_FORM = {
   title: "", source: "", stage: "NEW", estimated_value: "",
   owner: "", next_follow_up_date: "", notes: "",
   activity_note: "", activity_due_date: "",
+  product_id: "", quantity: "", discount: "", delivery_fee: "",
 };
 
 export default function CustomerOrders() {
@@ -76,6 +77,7 @@ export default function CustomerOrders() {
   const [products, setProducts] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
+  const [evManual, setEvManual] = useState(false);
 
   const load = async () => {
     try {
@@ -100,12 +102,38 @@ export default function CustomerOrders() {
 
   useEffect(() => { load(); }, []);
 
+  // Auto-calculate estimated value from quote fields unless user has overridden it manually
+  useEffect(() => {
+    if (evManual) return;
+    const prod = form.product_id
+      ? (products ?? []).find((p) => p.id === Number(form.product_id))
+      : null;
+    const up = prod?.unit_price ?? 0;
+    const q = parseFloat(form.quantity) || 0;
+    const d = parseFloat(form.discount) || 0;
+    const df = parseFloat(form.delivery_fee) || 0;
+    const hasInput = !!form.product_id || q > 0 || d > 0 || df > 0;
+    const calc = Math.max(0, up * q - d + df);
+    setForm((f) => ({ ...f, estimated_value: hasInput ? String(calc) : "" }));
+  }, [form.product_id, form.quantity, form.discount, form.delivery_fee, evManual, products]);
+
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const setSel = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
+  // Estimated value has a manual override: once the user types here, auto-calc stops updating it
+  const setEV = (e) => { setEvManual(true); setForm((f) => ({ ...f, estimated_value: e.target.value })); };
 
   const submit = async () => {
     if (!form.name.trim()) return toast.error("Customer name is required");
-    if (!form.title.trim()) return toast.error("Opportunity title is required");
+
+    const productOpts = products ?? [];
+    const selectedProd = form.product_id
+      ? productOpts.find((p) => p.id === Number(form.product_id)) ?? null
+      : null;
+
+    let title = form.title.trim();
+    if (!title && selectedProd) title = `${selectedProd.name} × ${form.quantity || 1}`;
+    if (!title) return toast.error("Opportunity title is required");
+
     setSubmitting(true);
     try {
       const customer = await customersApi.create({
@@ -115,16 +143,44 @@ export default function CustomerOrders() {
         company: form.company.trim() || null,
         status: form.status,
       });
+
+      let notes = form.notes.trim();
+      if (selectedProd) {
+        const q = parseFloat(form.quantity) || 0;
+        const d = parseFloat(form.discount) || 0;
+        const df = parseFloat(form.delivery_fee) || 0;
+        const up = selectedProd.unit_price ?? 0;
+        const sub = up * q;
+        const ev = parseFloat(form.estimated_value) || 0;
+        const quoteBlock = [
+          "--- Quote Details ---",
+          `Product: ${selectedProd.name}${selectedProd.sku ? ` (SKU: ${selectedProd.sku})` : ""}`,
+          `Quantity: ${q}`,
+          `Unit Price: $${Number(up).toLocaleString()}`,
+          `Subtotal: $${Number(sub).toLocaleString()}`,
+          `Discount: $${Number(d).toLocaleString()}`,
+          `Delivery Fee: $${Number(df).toLocaleString()}`,
+          `Estimated Value: $${Number(ev).toLocaleString()}`,
+          `Manual Override: ${evManual ? "Yes" : "No"}`,
+        ].join("\n");
+        notes = notes ? `${notes}\n\n${quoteBlock}` : quoteBlock;
+      }
+
       const lead = await leadsApi.create({
         customer_id: customer.id,
-        title: form.title.trim(),
+        title,
         source: form.source.trim() || null,
         stage: form.stage,
-        estimated_value: form.estimated_value ? parseInt(form.estimated_value, 10) : null,
+        estimated_value: form.estimated_value ? parseFloat(form.estimated_value) : null,
         owner: form.owner.trim() || null,
         next_follow_up_date: form.next_follow_up_date || null,
-        notes: form.notes.trim() || null,
+        notes: notes || null,
+        product_id: form.product_id ? Number(form.product_id) : null,
+        quantity: form.quantity ? parseFloat(form.quantity) : null,
+        discount: form.discount ? parseFloat(form.discount) : null,
+        delivery_fee: form.delivery_fee ? parseFloat(form.delivery_fee) : null,
       });
+
       if (form.activity_note.trim() || form.activity_due_date) {
         await activitiesApi.create({
           customer_id: customer.id,
@@ -138,6 +194,7 @@ export default function CustomerOrders() {
       }
       toast.success("Customer inquiry created");
       setForm(EMPTY_FORM);
+      setEvManual(false);
       load();
     } catch (e) {
       toast.error(e?.response?.data?.detail ?? "Failed to create inquiry");
@@ -183,6 +240,15 @@ export default function CustomerOrders() {
   const customerMap = Object.fromEntries(customerList.map((c) => [c.id, c]));
   const activeLeads = leadList.filter((l) => l.stage !== "WON" && l.stage !== "LOST");
   const pendingActivities = activityList.filter((a) => !a.completed);
+
+  // Derived quote values for the form display
+  const productOptions = products ?? [];
+  const selectedProduct = form.product_id
+    ? productOptions.find((p) => p.id === Number(form.product_id)) ?? null
+    : null;
+  const unitPrice = selectedProduct?.unit_price ?? 0;
+  const formQty = parseFloat(form.quantity) || 0;
+  const subtotal = unitPrice * formQty;
 
   return (
     <div className="space-y-8">
@@ -556,8 +622,12 @@ export default function CustomerOrders() {
             <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">Opportunity</div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="grid gap-2 sm:col-span-2">
-                <Label>Title <span className="text-red-500">*</span></Label>
-                <Input placeholder="e.g. Sofa set inquiry — 3-piece" value={form.title} onChange={set("title")} />
+                <Label>Title</Label>
+                <Input
+                  placeholder="e.g. Sofa set inquiry — 3-piece (auto-filled from product if left blank)"
+                  value={form.title}
+                  onChange={set("title")}
+                />
               </div>
               <div className="grid gap-2">
                 <Label>Source</Label>
@@ -578,10 +648,6 @@ export default function CustomerOrders() {
                 </Select>
               </div>
               <div className="grid gap-2">
-                <Label>Estimated Value ($)</Label>
-                <Input type="number" min={0} placeholder="e.g. 2500" value={form.estimated_value} onChange={set("estimated_value")} />
-              </div>
-              <div className="grid gap-2">
                 <Label>Owner</Label>
                 <Input placeholder="e.g. Alex" value={form.owner} onChange={set("owner")} />
               </div>
@@ -597,6 +663,82 @@ export default function CustomerOrders() {
                   value={form.notes}
                   onChange={set("notes")}
                 />
+              </div>
+            </div>
+          </div>
+
+          {/* Quote Details */}
+          <div>
+            <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
+              Quote Details{" "}
+              <span className="font-normal normal-case">(optional — select a product to build a quote)</span>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-2">
+                <Label>Product</Label>
+                <Select value={form.product_id} onValueChange={setSel("product_id")}>
+                  <SelectTrigger><SelectValue placeholder="Select product…" /></SelectTrigger>
+                  <SelectContent>
+                    {productOptions.map((p) => (
+                      <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label>Quantity</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  placeholder="e.g. 2"
+                  value={form.quantity}
+                  onChange={set("quantity")}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label>Unit Price</Label>
+                <div className="h-9 px-3 rounded-md border border-zinc-200 bg-zinc-50 text-sm text-zinc-500 flex items-center">
+                  {selectedProduct ? fmt$(unitPrice) : "—"}
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label>Subtotal</Label>
+                <div className="h-9 px-3 rounded-md border border-zinc-200 bg-zinc-50 text-sm text-zinc-500 flex items-center">
+                  {selectedProduct && formQty > 0 ? fmt$(subtotal) : "—"}
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label>Discount ($)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  placeholder="e.g. 100"
+                  value={form.discount}
+                  onChange={set("discount")}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label>Delivery Fee ($)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  placeholder="e.g. 50"
+                  value={form.delivery_fee}
+                  onChange={set("delivery_fee")}
+                />
+              </div>
+              <div className="grid gap-2 sm:col-span-2">
+                <Label>Estimated Value ($)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  placeholder="e.g. 2500"
+                  value={form.estimated_value}
+                  onChange={setEV}
+                />
+                <p className="text-xs text-zinc-400">
+                  Auto-calculated from product, quantity, discount, and delivery fee. You can override for special quotes.
+                </p>
               </div>
             </div>
           </div>
