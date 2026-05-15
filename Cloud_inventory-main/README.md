@@ -203,6 +203,10 @@ The Best-Selling Products card uses a rolling 7-day sales window so it matches t
 
 ## Screenshots
 
+### Dashboard
+
+![Stockwise dashboard — KPIs, AI restock summary, low-stock list](docs/screenshots/dashboard.png)
+
 ### Customer Orders & Sales Pipeline
 
 | Customer Orders Overview | Customer Orders Workspace |
@@ -211,9 +215,13 @@ The Best-Selling Products card uses a rolling 7-day sales window so it matches t
 
 ### Inventory Operations
 
-| Record Sale | AI Insights |
+| Record Sale | Record Restock |
 |---|---|
-| ![Record Sale workflow with product selection and stock-out tracking](docs/screenshots/Record%20Sale.png) | ![AI Insights page with per-product inventory recommendations](docs/screenshots/insights.png) |
+| ![Record Sale workflow with product selection and stock-out tracking](docs/screenshots/Record%20Sale.png) | ![Record Restock — supplier-aware stock-in form with filterable history](docs/screenshots/restock.png) |
+
+### AI Insights
+
+![AI Insights — per-product cards with urgency tier and natural-language recommendations](docs/screenshots/insights.png)
 
 ---
 
