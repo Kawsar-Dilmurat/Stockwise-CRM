@@ -2,9 +2,34 @@
 
 Stockwise-CRM is a full-stack web app for small business sales and inventory workflows.
 
-The project started as an inventory management system for tracking products, sales, restocks, suppliers, and low-stock alerts. It was later extended with a Customer Orders workspace so a small business can also track customer inquiries, sales opportunities, quotes, follow-up tasks, and won/lost pipeline value before the order becomes an inventory movement.
+The project started as an inventory management system for tracking products, sales, restocks, suppliers, and low-stock alerts. It was later extended with a Customer Orders workspace so a small business can also track customer inquiries, sales opportunities, product-based quotes, follow-up tasks, and won/lost pipeline value before the order becomes an inventory movement.
 
 The goal is not to replace a full ERP or enterprise CRM. It is a practical operations dashboard for a small team that wants one place to understand what is in stock, what needs attention, and which customer deals are currently in progress.
+
+---
+
+## Live deployment
+
+- **Live app:** https://main.d28ujyj8pewvmb.amplifyapp.com
+- **Backend API:** https://stockwise-crm-backend.onrender.com
+- **Frontend hosting:** AWS Amplify
+- **Backend hosting:** Render
+- **Database:** Neon PostgreSQL
+- **CORS:** Restricted to the deployed Amplify frontend domain
+
+> Note: The backend is hosted on Render Free, so the first request may take a short time to wake up after inactivity.
+
+Note:
+
+The main application source code is inside:
+
+Cloud_inventory-main/
+
+The full technical README is here:
+
+Cloud_inventory-main/README.md
+
+
 
 ---
 
@@ -29,51 +54,35 @@ The goal is not to replace a full ERP or enterprise CRM. It is a practical opera
 
   ```text
   unit price × quantity - discount + delivery fee
-  ```
-
-- Manual quote override for special cases such as bulk discounts, delivery fees, installation, or custom bundle pricing
-- Pipeline KPI cards for open opportunities, pending order value, upcoming follow-ups, won value, lost value, and customer count
-- Pipeline analytics for order outcomes, value by stage, stage breakdown, follow-up status, and best-selling products
-- Best-Selling Products card scoped to a rolling 7-day sales window so it matches the dashboard’s recent sales metric
-- Local demo reset scripts for inventory and CRM data with dry-run defaults and safety guards
-
----
-
-## Project location
+Manual quote override for special cases such as bulk discounts, delivery fees, installation, or custom bundle pricing
+Pipeline KPI cards for open opportunities, pending order value, upcoming follow-ups, won value, lost value, and customer count
+Pipeline analytics for order outcomes, value by stage, stage breakdown, follow-up status, and best-selling products
+Best-Selling Products card scoped to a rolling 7-day sales window so it matches the dashboard’s recent sales metric
+Local demo reset scripts for inventory and CRM data with dry-run defaults and safety guards
+Project location
 
 The main application source code is inside:
 
-```text
 Cloud_inventory-main/
-```
 
 The full technical README is here:
 
-```text
 Cloud_inventory-main/README.md
-```
 
 That README includes more detail about the architecture, API routes, local setup, deployment notes, CI/CD, and demo reset scripts.
 
----
-
-## Tech stack
-
-- React
-- Tailwind CSS
-- FastAPI
-- PostgreSQL
-- Neon PostgreSQL
-- Docker
-- GitHub Actions
-- AWS Amplify for frontend hosting
-- Render for backend hosting
-
----
-
-## Main application structure
-
-```text
+Tech stack
+React
+Tailwind CSS
+FastAPI
+PostgreSQL
+Neon PostgreSQL
+SQLAlchemy
+Docker
+GitHub Actions
+AWS Amplify for frontend hosting
+Render for backend hosting
+Main application structure
 Cloud_inventory-main/
 ├── backend/
 │   ├── app/
@@ -93,24 +102,53 @@ Cloud_inventory-main/
 │       └── pages/
 ├── docs/
 └── README.md
-```
+API areas
 
----
+The backend exposes REST APIs for:
 
-## Status
+Products
+Sales
+Restocks
+Suppliers
+Inventory insights
+Customers
+Leads
+Activities
+CRM dashboard metrics
+Health check
 
-The Stockwise-CRM upgrade has been developed and smoke-tested locally on a safe project copy and pushed to this separate GitHub repository for review.
+Key online API checks:
 
-Verified locally:
+GET /api/health
+GET /api/products
+GET /api/leads
+GET /api/crm/dashboard
+Deployment status
 
-- Dashboard metrics and API health check
-- Products page with unit price display and editing
-- Customer Orders CRM workspace
-- Product-based quote form with quantity, discount, delivery fee, and manual override
-- CRM lead fields saved through the backend API
-- Pipeline KPI cards linked through final estimated deal value
-- Best-Selling Products scoped to the last 7 days
-- Inventory and CRM demo reset scripts
-- Backend API responses for products, leads, and CRM dashboard data
+Stockwise-CRM has been deployed as an independent version of Stockwise using a separate GitHub repository, separate Render backend service, separate AWS Amplify frontend app, and a Neon PostgreSQL database branch/project for the CRM version.
+
+Verified online:
+
+Dashboard loads inventory metrics
+Products page loads furniture/appliance demo products with unit prices
+Customer Orders page loads CRM KPI cards, leads, follow-ups, and customer profiles
+Product-based quote form connects products, quantity, discount, delivery fee, and final estimated value
+Record Sale workflow loads products
+Record Restock workflow loads products and suppliers
+Suppliers page loads supplier data
+AI Insights page loads inventory insight data
+Backend health check returns database connectivity
+CORS is restricted to the deployed Amplify frontend domain
 
 The original Stockwise production deployment was not modified by this CRM upgrade.
+
+What this project demonstrates
+Backend API design with FastAPI and SQLAlchemy
+PostgreSQL data modeling for inventory, sales, suppliers, customers, leads, and activities
+Cloud deployment using AWS Amplify, Render, and Neon
+Environment-based frontend/backend configuration
+Rule-based inventory and pipeline logic
+Product-based quote calculation
+CRM-style lead and follow-up workflow design
+Dashboard UI for operational decision-making
+Deployment safety through a separate repo and independent cloud resources
