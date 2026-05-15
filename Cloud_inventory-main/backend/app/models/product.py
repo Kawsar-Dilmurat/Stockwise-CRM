@@ -15,6 +15,7 @@ class Product(Base):
     category = Column(String(128), nullable=False, default="general")
     stock_qty = Column(Integer, nullable=False, default=0)
     reorder_threshold = Column(Integer, nullable=False, default=10)
+    unit_price = Column(Integer, nullable=True)
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,

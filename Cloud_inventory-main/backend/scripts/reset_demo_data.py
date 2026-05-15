@@ -49,16 +49,16 @@ DEMO_SUPPLIERS = [
 # Sales and restock records are inserted as historical data only —
 # they do NOT adjust stock_qty. The value on the product row IS the live stock.
 DEMO_PRODUCTS = [
-    {"name": "3-Seat Fabric Sofa",              "sku": "SOFA-FAB-001", "category": "Furniture",  "stock_qty":  4, "reorder_threshold": 3},
-    {"name": "Oak Dining Table 6-Seater",       "sku": "TABL-OAK-006", "category": "Furniture",  "stock_qty":  2, "reorder_threshold": 2},
-    {"name": "Queen Bed Frame - Walnut",         "sku": "BED-WAL-Q",    "category": "Furniture",  "stock_qty":  3, "reorder_threshold": 2},
-    {"name": "Bookcase 5-Shelf White",          "sku": "BOOK-5S-WHT",  "category": "Furniture",  "stock_qty":  7, "reorder_threshold": 4},
-    {"name": "Ergonomic Office Chair",          "sku": "CHAIR-ERG-01", "category": "Furniture",  "stock_qty":  6, "reorder_threshold": 5},
-    {"name": "Stainless Refrigerator 22 cu ft", "sku": "FRID-SS-22",   "category": "Appliances", "stock_qty":  2, "reorder_threshold": 2},
-    {"name": "Front-Load Washing Machine 7kg",  "sku": "WASH-FL-7KG",  "category": "Appliances", "stock_qty":  3, "reorder_threshold": 2},
-    {"name": "4-Burner Gas Range",              "sku": "RANG-GAS-4B",  "category": "Appliances", "stock_qty":  2, "reorder_threshold": 2},
-    {"name": "Upright Vacuum Cleaner",          "sku": "VAC-UPRT-01",  "category": "Appliances", "stock_qty":  9, "reorder_threshold": 5},
-    {"name": "Tower Fan 42-inch",               "sku": "FAN-TWR-42",   "category": "Appliances", "stock_qty": 12, "reorder_threshold": 6},
+    {"name": "3-Seat Fabric Sofa",              "sku": "SOFA-FAB-001", "category": "Furniture",  "stock_qty":  4, "reorder_threshold": 3,  "unit_price": 1200},
+    {"name": "Oak Dining Table 6-Seater",       "sku": "TABL-OAK-006", "category": "Furniture",  "stock_qty":  2, "reorder_threshold": 2,  "unit_price": 1800},
+    {"name": "Queen Bed Frame - Walnut",         "sku": "BED-WAL-Q",    "category": "Furniture",  "stock_qty":  3, "reorder_threshold": 2,  "unit_price":  950},
+    {"name": "Bookcase 5-Shelf White",          "sku": "BOOK-5S-WHT",  "category": "Furniture",  "stock_qty":  7, "reorder_threshold": 4,  "unit_price":  380},
+    {"name": "Ergonomic Office Chair",          "sku": "CHAIR-ERG-01", "category": "Furniture",  "stock_qty":  6, "reorder_threshold": 5,  "unit_price":  420},
+    {"name": "Stainless Refrigerator 22 cu ft", "sku": "FRID-SS-22",   "category": "Appliances", "stock_qty":  2, "reorder_threshold": 2,  "unit_price": 1400},
+    {"name": "Front-Load Washing Machine 7kg",  "sku": "WASH-FL-7KG",  "category": "Appliances", "stock_qty":  3, "reorder_threshold": 2,  "unit_price":  780},
+    {"name": "4-Burner Gas Range",              "sku": "RANG-GAS-4B",  "category": "Appliances", "stock_qty":  2, "reorder_threshold": 2,  "unit_price":  650},
+    {"name": "Upright Vacuum Cleaner",          "sku": "VAC-UPRT-01",  "category": "Appliances", "stock_qty":  9, "reorder_threshold": 5,  "unit_price":  220},
+    {"name": "Tower Fan 42-inch",               "sku": "FAN-TWR-42",   "category": "Appliances", "stock_qty": 12, "reorder_threshold": 6,  "unit_price":  160},
 ]
 
 # (product_sku, supplier_name, qty, note, days_ago)

@@ -48,6 +48,9 @@ async def lifespan(_app: FastAPI):
                 "INTEGER REFERENCES suppliers(id) ON DELETE SET NULL"
             )
         )
+        await conn.execute(
+            text("ALTER TABLE products ADD COLUMN IF NOT EXISTS unit_price INTEGER")
+        )
     logger.info("db.tables.ready")
     await seed_if_empty()
     yield

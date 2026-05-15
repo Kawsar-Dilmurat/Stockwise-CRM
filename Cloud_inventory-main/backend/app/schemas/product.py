@@ -10,6 +10,7 @@ class ProductBase(BaseModel):
     category: str = Field(default="general", max_length=128)
     stock_qty: int = Field(..., ge=0)
     reorder_threshold: int = Field(default=10, ge=0)
+    unit_price: Optional[int] = None
 
 
 class ProductCreate(ProductBase):
@@ -22,6 +23,7 @@ class ProductUpdate(BaseModel):
     category: Optional[str] = Field(None, max_length=128)
     stock_qty: Optional[int] = Field(None, ge=0)
     reorder_threshold: Optional[int] = Field(None, ge=0)
+    unit_price: Optional[int] = None
 
 
 class ProductOut(ProductBase):
