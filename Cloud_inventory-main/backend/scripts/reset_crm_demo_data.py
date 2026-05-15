@@ -13,6 +13,19 @@ Dry-run (default, zero database changes):
 Execute (requires ALLOW_CRM_DEMO_RESET=true and a neon.tech DATABASE_URL):
     cd backend
     $env:ALLOW_CRM_DEMO_RESET="true"; python scripts/reset_crm_demo_data.py --execute
+
+Expected KPIs after reset
+--------------------------
+Open pipeline (PROPOSAL + QUALIFIED + CONTACTED + NEW)   $11,900
+  PROPOSAL   Devon Park   / Home Office Furniture Setup  $4,500  (70% → $3,150)
+  QUALIFIED  Nadia Okonkwo/ Bedroom Furniture Bundle     $3,800  (50% → $1,900)
+  CONTACTED  Sam Kowalski / Dining Room Set              $2,200  (25% →   $550)
+  NEW        Priya Mendez / Washing Machine pkg          $1,400  (10% →   $140)
+Weighted pipeline total                                  $5,740
+Won this period (2 deals)                                $6,000
+  Martha Chen   / Living Room Sofa Set                   $2,800
+  Jordan Riley  / Kitchen Appliance Package              $3,200
+Lost                                                     $  650  Devon Park / Gaming Chair
 """
 import argparse
 import asyncio
@@ -31,7 +44,7 @@ load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 from sqlalchemy import delete, func, select  # noqa: E402
 
 from app.db.session import AsyncSessionLocal  # noqa: E402
-from app.models import Activity, Customer, Lead  # noqa: E402
+from app.models import Activity, Customer, Lead, Product  # noqa: E402
 from app.models.lead import STAGE_PROBABILITY  # noqa: E402
 
 # ---------------------------------------------------------------------------
@@ -48,16 +61,58 @@ DEMO_CUSTOMERS = [
     ("Priya Mendez",  "priya.m@brightspace.co",    "Bright Space Co.", "LEAD"),
 ]
 
-# (customer_name, title, stage, estimated_value, follow_up_days_offset)
-# follow_up_days_offset=None means no next_follow_up_date.
+# (customer_name, title, stage, follow_up_days_offset,
+#  product_name, quantity, discount, delivery_fee,
+#  manual_value, extra_note)
+#
+# estimated_value = unit_price * quantity - discount + delivery_fee
+# Set manual_value (int) to override the formula — notes will mark it "Manual Override: Yes".
+# Product IDs are resolved at runtime by name so they survive a reset_demo_data.py re-run.
 DEMO_LEADS = [
-    ("Martha Chen",   "Living Room Sofa Set",              "WON",      2800, None),
-    ("Jordan Riley",  "Kitchen Appliance Package",         "WON",      3200, None),
-    ("Devon Park",    "Home Office Furniture Setup",       "PROPOSAL", 4500,    3),
-    ("Nadia Okonkwo", "Bedroom Furniture Bundle",          "QUALIFIED",3800,    5),
-    ("Sam Kowalski",  "Dining Room Set",                   "CONTACTED",2200,    7),
-    ("Priya Mendez",  "Washing Machine + Vacuum Cleaner",  "NEW",      1400,    4),
-    ("Devon Park",    "Ergonomic Gaming Chair",             "LOST",      650, None),
+    # Martha Chen — WON: 2 fabric sofas + delivery
+    # 1200 × 2 − 0 + 400 = 2 800
+    (
+        "Martha Chen", "Living Room Sofa Set", "WON", None,
+        "3-Seat Fabric Sofa", 2, 0, 400, None, None,
+    ),
+    # Jordan Riley — WON: 2 refrigerators + delivery
+    # 1400 × 2 − 0 + 400 = 3 200
+    (
+        "Jordan Riley", "Kitchen Appliance Package", "WON", None,
+        "Stainless Refrigerator 22 cu ft", 2, 0, 400, None, None,
+    ),
+    # Devon Park — PROPOSAL: 10 office chairs + delivery
+    # 420 × 10 − 0 + 300 = 4 500
+    (
+        "Devon Park", "Home Office Furniture Setup", "PROPOSAL", 3,
+        "Ergonomic Office Chair", 10, 0, 300, None, None,
+    ),
+    # Nadia Okonkwo — QUALIFIED: 4 walnut bed frames, loyalty discount, delivery
+    # 950 × 4 − 100 + 100 = 3 800
+    (
+        "Nadia Okonkwo", "Bedroom Furniture Bundle", "QUALIFIED", 5,
+        "Queen Bed Frame - Walnut", 4, 100, 100, None, None,
+    ),
+    # Sam Kowalski — CONTACTED: 1 dining table + delivery
+    # 1800 × 1 − 0 + 400 = 2 200
+    (
+        "Sam Kowalski", "Dining Room Set", "CONTACTED", 7,
+        "Oak Dining Table 6-Seater", 1, 0, 400, None, None,
+    ),
+    # Priya Mendez — NEW: washing machine; delivery fee covers installation package
+    # 780 × 1 − 0 + 620 = 1 400
+    (
+        "Priya Mendez", "Washing Machine + Vacuum Cleaner", "NEW", 4,
+        "Front-Load Washing Machine 7kg", 1, 0, 620, None,
+        "Single-product quote; delivery fee includes installation package.",
+    ),
+    # Devon Park — LOST: customer wanted gaming-specific model; no exact stock match
+    # manual_value = 650 (custom build quote; formula not used)
+    (
+        "Devon Park", "Ergonomic Gaming Chair", "LOST", None,
+        "Ergonomic Office Chair", 1, 0, 0, 650,
+        "Customer wanted gaming-specific model; no exact stock match — quoted as custom build.",
+    ),
 ]
 
 # (customer_name, lead_title, activity_type, communication_method,
@@ -115,12 +170,12 @@ DEMO_ACTIVITIES = [
 # Safety guards
 # ---------------------------------------------------------------------------
 
-def _die(msg: str) -> None:
+def _die(msg):
     print(f"\n[ERROR] {msg}", file=sys.stderr)
     sys.exit(1)
 
 
-def _check_safety() -> None:
+def _check_safety():
     db_url = os.environ.get("DATABASE_URL", "")
     allow  = os.environ.get("ALLOW_CRM_DEMO_RESET", "")
 
@@ -150,7 +205,7 @@ def _check_safety() -> None:
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _lead_key(customer_map: dict, lead: "Lead") -> tuple:
+def _lead_key(customer_map, lead):
     """Return (customer_name, lead_title) for a flushed Lead object."""
     for name, cust in customer_map.items():
         if cust.id == lead.customer_id:
@@ -158,11 +213,41 @@ def _lead_key(customer_map: dict, lead: "Lead") -> tuple:
     return ("", lead.title)
 
 
+def _build_quote_notes(
+    product_name, sku, quantity, unit_price,
+    discount, delivery_fee, estimated_value, manual_override, extra_note=None,
+):
+    """Return a pipe-delimited quote summary for the lead notes field (≤1000 chars)."""
+    subtotal = unit_price * quantity
+    parts = [
+        f"Product: {product_name}",
+        f"SKU: {sku}",
+        f"Quantity: {quantity}",
+        f"Unit Price: ${unit_price:,}",
+        f"Subtotal: ${subtotal:,}",
+        f"Discount: ${discount:,}",
+        f"Delivery Fee: ${delivery_fee:,}",
+        f"Estimated Value: ${estimated_value:,}",
+        f"Manual Override: {'Yes' if manual_override else 'No'}",
+    ]
+    if extra_note:
+        parts.append(extra_note)
+    return " | ".join(parts)[:1000]
+
+
+async def _fetch_product_map(db):
+    """Return {product_name: (id, unit_price, sku)} from the products table."""
+    rows = (
+        await db.execute(select(Product.id, Product.name, Product.sku, Product.unit_price))
+    ).all()
+    return {row.name: (row.id, row.unit_price or 0, row.sku) for row in rows}
+
+
 # ---------------------------------------------------------------------------
 # Core logic
 # ---------------------------------------------------------------------------
 
-async def _fetch_counts(db) -> dict:
+async def _fetch_counts(db):
     return {
         "activities": (await db.execute(select(func.count(Activity.id)))).scalar() or 0,
         "leads":      (await db.execute(select(func.count(Lead.id)))).scalar()     or 0,
@@ -170,7 +255,7 @@ async def _fetch_counts(db) -> dict:
     }
 
 
-async def run(execute: bool) -> None:
+async def run(execute):
     print("\n=== Stockwise-CRM Demo Data Reset (CRM tables) ===")
     print("WARNING: This resets CRM tables only. Inventory tables are not touched.")
     print("WARNING: Only use this on the Neon child/dev branch — never on production.")
@@ -198,6 +283,18 @@ async def run(execute: bool) -> None:
         print(f"  {len(DEMO_LEADS)} leads/opportunities")
         print(f"  {len(DEMO_ACTIVITIES)} activities/follow-up tasks")
 
+        print("\nExpected KPIs after reset:")
+        print("  Open pipeline (PROPOSAL/QUALIFIED/CONTACTED/NEW):  $11,900")
+        print("    PROPOSAL   Home Office Furniture Setup   $4,500  (weighted $3,150)")
+        print("    QUALIFIED  Bedroom Furniture Bundle      $3,800  (weighted $1,900)")
+        print("    CONTACTED  Dining Room Set               $2,200  (weighted $  550)")
+        print("    NEW        Washing Machine pkg           $1,400  (weighted $  140)")
+        print("  Weighted pipeline total:                            $5,740")
+        print("  Won this period (2 deals):                          $6,000")
+        print("    Martha Chen  — Living Room Sofa Set      $2,800")
+        print("    Jordan Riley — Kitchen Appliance Package $3,200")
+        print("  Lost:                                               $  650")
+
         if not execute:
             print("\n[DRY-RUN] No changes made.")
             print(
@@ -215,6 +312,11 @@ async def run(execute: bool) -> None:
             await db.execute(delete(Customer))
             print("\n[EXECUTE] Existing CRM rows deleted.")
 
+            # Resolve product IDs by name — inventory tables are not touched.
+            product_map = await _fetch_product_map(db)
+            if not product_map:
+                print("[WARN] No products found in database. Lead product_id fields will be NULL.")
+
             # Customers.
             customer_objs = [
                 Customer(name=name, email=email, company=company, status=status)
@@ -222,28 +324,52 @@ async def run(execute: bool) -> None:
             ]
             db.add_all(customer_objs)
             await db.flush()
-            customer_map = {c.name: c for c in customer_objs}
+            customer_map_obj = {c.name: c for c in customer_objs}
 
-            # Leads — close_probability auto-set from STAGE_PROBABILITY.
+            # Leads — estimated_value computed from quote formula unless manual_value is set.
             lead_objs = []
-            for cust_name, title, stage, est_value, fu_offset in DEMO_LEADS:
+            for (
+                cust_name, title, stage, fu_offset,
+                product_name, quantity, discount, delivery_fee,
+                manual_value, extra_note,
+            ) in DEMO_LEADS:
+                prod_entry = product_map.get(product_name)
+                if prod_entry:
+                    prod_id, unit_price, sku = prod_entry
+                else:
+                    prod_id, unit_price, sku = None, 0, "UNKNOWN"
+                    print(f"[WARN] Product not found: '{product_name}' — '{title}' will have no product_id.")
+
+                is_manual = manual_value is not None
+                estimated_value = manual_value if is_manual else (unit_price * quantity - discount + delivery_fee)
+
+                notes = _build_quote_notes(
+                    product_name, sku, quantity, unit_price,
+                    discount, delivery_fee, estimated_value, is_manual, extra_note,
+                )
+
                 lead = Lead(
-                    customer_id=customer_map[cust_name].id,
+                    customer_id=customer_map_obj[cust_name].id,
                     title=title,
                     stage=stage,
-                    estimated_value=est_value,
+                    estimated_value=estimated_value,
                     close_probability=STAGE_PROBABILITY[stage],
                     owner="Alex",
                     next_follow_up_date=(
                         now + timedelta(days=fu_offset) if fu_offset is not None else None
                     ),
+                    product_id=prod_id,
+                    quantity=quantity,
+                    discount=discount,
+                    delivery_fee=delivery_fee,
+                    notes=notes,
                 )
                 lead_objs.append(lead)
             db.add_all(lead_objs)
             await db.flush()
 
             # Build a (customer_name, lead_title) → lead lookup.
-            lead_map = {_lead_key(customer_map, l): l for l in lead_objs}
+            lead_map = {_lead_key(customer_map_obj, l): l for l in lead_objs}
 
             # Activities.
             activity_objs = []
@@ -251,7 +377,7 @@ async def run(execute: bool) -> None:
                 key = (cust_name, lead_title)
                 lead_obj = lead_map.get(key)
                 activity = Activity(
-                    customer_id=customer_map[cust_name].id,
+                    customer_id=customer_map_obj[cust_name].id,
                     lead_id=lead_obj.id if lead_obj else None,
                     activity_type=act_type,
                     communication_method=comm_method,
@@ -286,7 +412,7 @@ async def run(execute: bool) -> None:
 # Entry point
 # ---------------------------------------------------------------------------
 
-def main() -> None:
+def main():
     parser = argparse.ArgumentParser(
         description=(
             "Reset Stockwise-CRM CRM demo data (activities, leads, customers). "
