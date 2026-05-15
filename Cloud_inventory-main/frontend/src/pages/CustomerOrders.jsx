@@ -522,8 +522,10 @@ export default function CustomerOrders() {
             const salesList  = sales ?? [];
             const productList2 = products ?? [];
             const productMap2 = Object.fromEntries(productList2.map((p) => [p.id, p]));
+            const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+            const recentSales = salesList.filter(({ sold_at }) => sold_at && new Date(sold_at) >= cutoff);
             const totals = {};
-            salesList.forEach(({ product_id, quantity }) => {
+            recentSales.forEach(({ product_id, quantity }) => {
               totals[product_id] = (totals[product_id] ?? 0) + quantity;
             });
             const top5 = Object.entries(totals)
@@ -540,11 +542,11 @@ export default function CustomerOrders() {
                     </div>
                     <div>
                       <div className="text-sm font-medium text-zinc-800 leading-tight">Best-Selling</div>
-                      <div className="text-xs text-zinc-400">Top products by units</div>
+                      <div className="text-xs text-zinc-400">Top products · last 7 days</div>
                     </div>
                   </div>
                   {top5.length === 0 ? (
-                    <p className="text-xs text-zinc-400">No sales recorded yet.</p>
+                    <p className="text-xs text-zinc-400">No sales in the last 7 days.</p>
                   ) : (
                     <div className="space-y-2.5">
                       {top5.map(({ name, qty }, idx) => (
