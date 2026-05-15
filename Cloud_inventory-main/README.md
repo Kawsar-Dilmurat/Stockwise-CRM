@@ -1,6 +1,6 @@
-# Stockwise — Inventory Management with AI Restock Insights
+# Stockwise — Inventory Management & CRM Sales Pipeline
 
-Stockwise is a lightweight inventory management web app for small businesses. It tracks products, sales, restocks, and suppliers in one place, then highlights items that may need attention using simple inventory rules and readable AI-style restock notes.
+Stockwise is a web app for small businesses that covers both sides of the sales cycle: inventory operations and customer pipeline tracking. On the inventory side it tracks products, sales, restocks, and suppliers, and flags items that need reordering using rule-based metrics and plain-language AI restock notes. On the CRM side it tracks customer inquiries, lead opportunities, and follow-up tasks through a configurable pipeline before any inventory movement happens.
 
 ![Stockwise dashboard — KPIs, AI restock summary, low-stock list](docs/screenshots/dashboard.png)
 
@@ -8,24 +8,46 @@ Stockwise is a lightweight inventory management web app for small businesses. It
 
 Small shops and side-business operators often manage inventory through spreadsheets, memory, or scattered notes. Stockwise gives that workflow a more structured path:
 
+**Inventory operations:**
+
 - sales are recorded as outbound stock movements,
 - restocks are recorded as inbound stock movements,
 - suppliers can be linked to restock history,
 - low-stock items are flagged using explainable rules, and
 - restock recommendations are written in plain language so the numbers are easier to act on.
 
-The goal is not to replace a full ERP system. It is a practical inventory dashboard for a small operator who wants to understand what is in stock, what is running low, and what should be reordered next.
+**Customer pipeline:**
+
+- customer inquiries are captured before they affect inventory,
+- each inquiry moves through a sales pipeline (New → Contacted → Qualified → Proposal → Won / Lost),
+- a product-based quote form calculates estimated deal value from unit price, quantity, discount, and delivery fee,
+- follow-up tasks keep the pipeline moving without a separate task tool, and
+- pipeline KPI cards show open value, won/lost totals, and upcoming follow-ups at a glance.
+
+The goal is not to replace a full ERP system. It is a practical operations dashboard for a small operator who wants to understand what is in stock, what is running low, and what deals are in progress.
 
 ## Core features
 
-- **Products** — create, view, update, and delete products with name, SKU, category, stock quantity, and reorder threshold.
+### Inventory operations
+
+- **Products** — create, view, update, and delete products with name, SKU, category, stock quantity, reorder threshold, and unit price.
 - **Sales tracking** — recording a sale automatically decreases stock and prevents sales when stock is insufficient.
 - **Restock tracking** — recording a restock automatically increases stock, with optional supplier and note fields.
 - **Suppliers** — lightweight supplier directory with top-supplier aggregation based on restock history.
 - **Rule-based inventory insights** — the backend calculates 7-day sales, average daily sales, estimated days left, reorder flags, suggested reorder quantity, and urgency tier.
 - **AI-style restock narration** — structured inventory metrics are converted into short, readable recommendations through a swappable `AIProvider` layer.
 - **Health check** — `/api/health` verifies backend availability and database connectivity.
-- **Seed data** — the app includes demo products, sales, restocks, and suppliers so the dashboard is useful immediately after setup.
+- **Demo data** — the app includes demo products, sales, restocks, and suppliers so the dashboard is useful immediately after setup.
+
+### Customer Orders & Sales Pipeline
+
+- **Customer profiles** — a lightweight customer directory linked to leads and activities.
+- **Lead pipeline** — each customer inquiry is a lead that moves through six stages: New, Contacted, Qualified, Proposal, Won, and Lost.
+- **Product-based quote form** — select a product and enter quantity, discount, and delivery fee; estimated deal value is calculated automatically as `unit_price × quantity − discount + delivery_fee`. The value can be manually overridden for special quotes.
+- **Pipeline KPI cards** — open opportunities, pending order value, upcoming follow-ups, won/lost totals, and total customers are shown at the top of the Customer Orders page.
+- **Pipeline analytics** — win rate, value by stage, and order outcome breakdown update as leads move through the pipeline.
+- **Best-Selling Products** — calculated from a rolling 7-day sales window to match the Dashboard's sales metrics rather than all-time totals.
+- **Follow-up activities** — tasks can be attached to a lead with a due date and marked complete directly from the pipeline view.
 
 > **Note on AI:** Stockwise uses rule-based inventory metrics first. The AI layer only turns those structured numbers into readable restock notes. This keeps the recommendation logic easier to inspect and explain.
 
@@ -103,14 +125,15 @@ This is intentionally lightweight. The goal is to catch obvious build or deploym
 
 The backend is currently hosted on Render Free. If the service has been inactive, the first request can take around 20-50 seconds while the instance wakes up. After that, the app usually responds normally.
 
-The production deployment has been validated across:
+The app has been smoke-tested locally across:
 
 - Dashboard inventory metrics
-- Products page
+- Products page (including unit price display and edit)
 - Record Sale workflow
 - Record Restock workflow
 - Suppliers page
 - AI Insights page
+- Customer Orders page (pipeline KPIs, quote form, lead stage transitions)
 - Backend health check
 - Frontend/backend/database connectivity
 
@@ -129,11 +152,15 @@ Frontend (React + shadcn/ui)
         v
 FastAPI Backend
         |
-        +-- /api/products       Product CRUD
+        +-- /api/products       Product CRUD (includes unit_price)
         +-- /api/sales          Stock-out workflow
         +-- /api/restocks       Stock-in workflow
         +-- /api/suppliers      Supplier directory and top-supplier aggregation
         +-- /api/insights/...   Rule-based metrics and AI-style narration
+        +-- /api/customers      Customer directory
+        +-- /api/leads          Lead pipeline CRUD and stage transitions
+        +-- /api/activities     Follow-up task management
+        +-- /api/crm/dashboard  Pipeline KPI aggregation
         +-- /api/health         Health and database check
         |
         v
@@ -156,12 +183,23 @@ Inventory calculations live in the service layer. AI narration lives behind the 
 │   ├── app/
 │   │   ├── db/session.py            # async engine + session factory
 │   │   ├── models/                  # SQLAlchemy models
-│   │   ├── schemas/                 # Pydantic schemas
+│   │   │   ├── customer.py          # Customer profile
+│   │   │   ├── lead.py              # Lead / opportunity with quote fields
+│   │   │   └── activity.py          # Follow-up task
+│   │   ├── schemas/
+│   │   │   └── crm_dashboard.py     # Pipeline KPI schema
 │   │   ├── routes/                  # FastAPI route modules
+│   │   │   ├── customers.py
+│   │   │   ├── leads.py
+│   │   │   ├── activities.py
+│   │   │   └── crm_dashboard.py
 │   │   ├── services/
 │   │   │   ├── inventory_service.py # rule-based inventory metrics
 │   │   │   └── ai_service.py        # AIProvider interface + MockAIProvider
 │   │   └── utils/seed.py            # demo data seeder
+│   ├── scripts/
+│   │   ├── reset_demo_data.py       # inventory demo reset (dry-run by default)
+│   │   └── reset_crm_demo_data.py   # CRM demo reset (dry-run by default)
 │   ├── server.py                    # FastAPI entrypoint
 │   ├── Dockerfile
 │   ├── requirements.txt
@@ -201,6 +239,21 @@ All endpoints are prefixed with `/api`.
 | GET    | `/api/insights/product/{id}`            | Insight for one product                  |
 | POST   | `/api/insights/product/{id}/ai-summary` | AI-style restock note for one product    |
 | POST   | `/api/insights/daily-ai-summary`        | Daily low-stock summary                  |
+| GET    | `/api/customers`                        | List all customers                       |
+| POST   | `/api/customers`                        | Create a customer                        |
+| GET    | `/api/customers/{id}`                   | Get one customer                         |
+| PUT    | `/api/customers/{id}`                   | Update a customer                        |
+| DELETE | `/api/customers/{id}`                   | Delete a customer                        |
+| GET    | `/api/leads`                            | List all leads                           |
+| POST   | `/api/leads`                            | Create a lead (with optional quote fields) |
+| GET    | `/api/leads/{id}`                       | Get one lead                             |
+| PUT    | `/api/leads/{id}`                       | Update a lead / advance stage            |
+| DELETE | `/api/leads/{id}`                       | Delete a lead                            |
+| GET    | `/api/leads/customer/{id}`              | Leads for one customer                   |
+| GET    | `/api/activities`                       | List all activities                      |
+| POST   | `/api/activities`                       | Create a follow-up activity              |
+| PUT    | `/api/activities/{id}/complete`         | Mark an activity complete                |
+| GET    | `/api/crm/dashboard`                    | Pipeline KPI aggregation                 |
 
 ## How the insight feature works
 
@@ -222,6 +275,42 @@ All endpoints are prefixed with `/api`.
    The default `MockAIProvider` returns deterministic text and does not call an external model.
 
 3. **Swappable provider design.** A real LLM can be added by subclassing `AIProvider` in `app/services/ai_service.py`, registering it in `get_ai_provider()`, and setting the provider through environment configuration.
+
+## Demo data & reset scripts
+
+Two scripts in `backend/scripts/` reset demo data on Neon dev or child branches. They default to a dry run and print a plan without touching the database. Pass `--execute` and the required environment variable to write.
+
+**`reset_demo_data.py`** — resets inventory tables only (products, sales, restocks, suppliers). CRM tables are not touched.
+
+```bash
+# Dry run (default — no database changes)
+cd backend
+python scripts/reset_demo_data.py
+
+# Execute (requires the guard variable)
+ALLOW_DEMO_RESET=true python scripts/reset_demo_data.py --execute
+
+# Execute — PowerShell (Windows)
+$env:ALLOW_DEMO_RESET="true"
+python scripts/reset_demo_data.py --execute
+```
+
+**`reset_crm_demo_data.py`** — resets CRM tables only (customers, leads, activities). Inventory tables are not touched. Demo leads are aligned with the current product price model so quote fields produce realistic estimated values.
+
+```bash
+# Dry run (default — no database changes)
+cd backend
+python scripts/reset_crm_demo_data.py
+
+# Execute (requires the guard variable)
+ALLOW_CRM_DEMO_RESET=true python scripts/reset_crm_demo_data.py --execute
+
+# Execute — PowerShell (Windows)
+$env:ALLOW_CRM_DEMO_RESET="true"
+python scripts/reset_crm_demo_data.py --execute
+```
+
+> **Safety note:** Neither script should be run against the production database. The guard variables (`ALLOW_DEMO_RESET`, `ALLOW_CRM_DEMO_RESET`) are intentionally separate so an inventory reset cannot accidentally trigger a CRM reset.
 
 ## Run locally
 
