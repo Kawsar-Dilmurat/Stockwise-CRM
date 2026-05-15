@@ -206,41 +206,55 @@ The Best-Selling Products card uses a rolling 7-day sales window so it matches t
 ### Dashboard
 
 <p align="center">
-  <img src="docs/screenshots/dashboard.png" alt="Stockwise dashboard — KPIs, AI restock summary, low-stock list" width="900" />
+  <img src="docs/screenshots/dashboard.png" alt="Stockwise dashboard with inventory metrics and AI restock summary" width="900" />
 </p>
 
-### Customer Orders Overview
+### Products
 
 <p align="center">
-  <img src="docs/screenshots/Customer%20Order_1.png" alt="Customer Orders overview with CRM pipeline KPIs and analytics" width="900" />
+  <img src="docs/screenshots/products.png" alt="Products page with furniture and appliance product catalog" width="900" />
 </p>
 
-### Customer Orders Workspace
+### Customer Orders & Sales Pipeline
+
+#### Customer Orders Overview
 
 <p align="center">
-  <img src="docs/screenshots/Customer%20Order_2.png" alt="Customer Orders workspace with opportunities, follow-ups, and customer profiles" width="900" />
+  <img src="docs/screenshots/Customer_order_1.png" alt="Customer Orders overview with CRM pipeline KPIs and analytics" width="900" />
+</p>
+
+#### Customer Orders Workspace
+
+<p align="center">
+  <img src="docs/screenshots/Customer_Orders_2.png" alt="Customer Orders workspace with opportunities, follow-ups, and customer profiles" width="900" />
 </p>
 
 ### Inventory Operations
 
-<table>
-  <tr>
-    <td align="center" width="50%">
-      <strong>Record Sale</strong><br/><br/>
-      <img src="docs/screenshots/Record%20Sale.png" alt="Record Sale workflow with product selection and stock-out tracking" width="100%" />
-    </td>
-    <td align="center" width="50%">
-      <strong>Record Restock</strong><br/><br/>
-      <img src="docs/screenshots/restock.png" alt="Record Restock — supplier-aware stock-in form with filterable history" width="100%" />
-    </td>
-  </tr>
-</table>
+#### Record Sale
+
+<p align="center">
+  <img src="docs/screenshots/Record_Sale.png" alt="Record Sale workflow with product selection and stock-out tracking" width="900" />
+</p>
+
+#### Record Restock
+
+<p align="center">
+  <img src="docs/screenshots/Record_Restock.png" alt="Record Restock workflow with supplier-aware stock-in tracking" width="900" />
+</p>
+
+### Suppliers
+
+<p align="center">
+  <img src="docs/screenshots/Suppliers.png" alt="Suppliers page with supplier directory and restock history" width="900" />
+</p>
 
 ### AI Insights
 
 <p align="center">
-  <img src="docs/screenshots/insights.png" alt="AI Insights — per-product cards with urgency tier and natural-language recommendations" width="900" />
+  <img src="docs/screenshots/AI_Insights.png" alt="AI Insights page with per-product inventory recommendations" width="900" />
 </p>
+
 ---
 
 ## Tech Stack
