@@ -1,93 +1,116 @@
-# Stockwise
+# Stockwise-CRM — Sales & Inventory Operations Platform
 
-Stockwise is a cloud-deployed inventory management web application for small business inventory workflows.
+Stockwise-CRM is a full-stack web app for small business sales and inventory workflows.
 
-This repository uses a nested project structure. The main application source code is located in:
+The project started as an inventory management system for tracking products, sales, restocks, suppliers, and low-stock alerts. It was later extended with a Customer Orders workspace so a small business can also track customer inquiries, sales opportunities, quotes, follow-up tasks, and won/lost pipeline value before the order becomes an inventory movement.
 
+The goal is not to replace a full ERP or enterprise CRM. It is a practical operations dashboard for a small team that wants one place to understand what is in stock, what needs attention, and which customer deals are currently in progress.
 
-Cloud_inventory-main/
+---
 
+## What this project includes
 
-## Project Overview
+### Inventory operations
 
-Stockwise provides inventory management features including product catalog management, sales recording, restock tracking, supplier records, and rule-based inventory insights.
+- Inventory dashboard with product, stock, low-stock, and recent sales metrics
+- Product catalog with SKU, category, stock quantity, reorder threshold, and unit price
+- Sales recording workflow that decreases product stock
+- Restock recording workflow that increases product stock
+- Supplier tracking and supplier-linked restock history
+- Rule-based inventory insights for low-stock items, days-left estimates, and suggested reorder quantities
+- AI-style restock summaries that explain inventory signals in plain language
 
-The project is built as a full-stack web application with a React frontend, FastAPI backend, and PostgreSQL database.
+### Customer Orders & CRM pipeline
 
-## Repository Structure
+- Customer Orders workspace for customer inquiries and sales opportunities
+- Customer profiles connected to leads and follow-up activities
+- Lead pipeline with stages: New, Contacted, Qualified, Proposal, Won, and Lost
+- Product-based quote builder using:
+
+  ```text
+  unit price × quantity - discount + delivery fee
+  ```
+
+- Manual quote override for special cases such as bulk discounts, delivery fees, installation, or custom bundle pricing
+- Pipeline KPI cards for open opportunities, pending order value, upcoming follow-ups, won value, lost value, and customer count
+- Pipeline analytics for order outcomes, value by stage, stage breakdown, follow-up status, and best-selling products
+- Best-Selling Products card scoped to a rolling 7-day sales window so it matches the dashboard’s recent sales metric
+- Local demo reset scripts for inventory and CRM data with dry-run defaults and safety guards
+
+---
+
+## Project location
+
+The main application source code is inside:
 
 ```text
-Cldou_inventory_Stockwise/
-├── .github/
-│   └── workflows/
-│       └── ci.yml
-├── docs/
-│   └── deployment-runbook.md
-├── Cloud_inventory-main/
-│   ├── frontend/
-│   ├── backend/
-│   ├── docs/
-│   ├── tests/
-│   ├── README.md
-│   └── docker-compose.yml
-└── .gitattributes
-```
-
-## Main Application
-
-The main project files are organized under:
 Cloud_inventory-main/
-
-Key folders:
-
-Cloud_inventory-main/frontend/   React frontend
-Cloud_inventory-main/backend/    FastAPI backend
-Cloud_inventory-main/docs/       Project screenshots and related assets
-Cloud_inventory-main/tests/      Test-related files
-
-
-## Cloud Deployment and CI
-
-This project includes cloud deployment and CI/CD-related configuration:
-
-- React frontend hosted on AWS Amplify
-- FastAPI backend hosted on Render
-- PostgreSQL database hosted on Neon
-- GitHub Actions workflow for CI checks
-- Environment-based configuration for frontend/backend connectivity
-- Restricted CORS configuration between the deployed frontend and backend
-
-The CI workflow is located at:
-
-
-.github/workflows/ci.yml
-
-The deployment runbook is located at:
-
-
-docs/deployment-runbook.md
 ```
 
-## Documentation
+The full technical README is here:
 
-For the full application README, see:
+```text
+Cloud_inventory-main/README.md
+```
 
+That README includes more detail about the architecture, API routes, local setup, deployment notes, CI/CD, and demo reset scripts.
 
-For deployment architecture, environment variables, validation steps, and rollback notes, see:
+---
 
-docs/deployment-runbook.md
+## Tech stack
 
+- React
+- Tailwind CSS
+- FastAPI
+- PostgreSQL
+- Neon PostgreSQL
+- Docker
+- GitHub Actions
+- AWS Amplify for frontend hosting
+- Render for backend hosting
 
-## Current Project Status
+---
 
-The application has been deployed and validated with the following workflows:
+## Main application structure
 
-- Dashboard inventory overview
-- Product management
-- Sales recording
-- Restock recording
-- Supplier records
-- Inventory insights
-- Backend health check
-- Frontend/backend/database connectivity
-- GitHub Actions CI checks
+```text
+Cloud_inventory-main/
+├── backend/
+│   ├── app/
+│   │   ├── models/
+│   │   ├── routes/
+│   │   ├── schemas/
+│   │   ├── services/
+│   │   └── utils/
+│   ├── scripts/
+│   │   ├── reset_demo_data.py
+│   │   └── reset_crm_demo_data.py
+│   └── server.py
+├── frontend/
+│   └── src/
+│       ├── components/
+│       ├── lib/
+│       └── pages/
+├── docs/
+└── README.md
+```
+
+---
+
+## Status
+
+The Stockwise-CRM upgrade has been developed and smoke-tested locally on a safe project copy and pushed to this separate GitHub repository for review.
+
+Verified locally:
+
+- Dashboard metrics and API health check
+- Products page with unit price display and editing
+- Customer Orders CRM workspace
+- Product-based quote form with quantity, discount, delivery fee, and manual override
+- CRM lead fields saved through the backend API
+- Pipeline KPI cards linked through final estimated deal value
+- Best-Selling Products scoped to the last 7 days
+- Inventory and CRM demo reset scripts
+- Backend API responses for products, leads, and CRM dashboard data
+
+The original Stockwise production deployment was not modified by this CRM upgrade.
