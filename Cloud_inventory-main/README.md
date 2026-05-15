@@ -205,24 +205,42 @@ The Best-Selling Products card uses a rolling 7-day sales window so it matches t
 
 ### Dashboard
 
-![Stockwise dashboard — KPIs, AI restock summary, low-stock list](docs/screenshots/dashboard.png)
+<p align="center">
+  <img src="docs/screenshots/dashboard.png" alt="Stockwise dashboard — KPIs, AI restock summary, low-stock list" width="900" />
+</p>
 
-### Customer Orders & Sales Pipeline
+### Customer Orders Overview
 
-| Customer Orders Overview | Customer Orders Workspace |
-|---|---|
-| ![Customer Orders overview with CRM pipeline KPIs and analytics](docs/screenshots/Customer%20Order_1.png) | ![Customer Orders workspace with opportunities, follow-ups, and customer profiles](docs/screenshots/Customer%20Order_2.png) |
+<p align="center">
+  <img src="docs/screenshots/Customer%20Order_1.png" alt="Customer Orders overview with CRM pipeline KPIs and analytics" width="900" />
+</p>
+
+### Customer Orders Workspace
+
+<p align="center">
+  <img src="docs/screenshots/Customer%20Order_2.png" alt="Customer Orders workspace with opportunities, follow-ups, and customer profiles" width="900" />
+</p>
 
 ### Inventory Operations
 
-| Record Sale | Record Restock |
-|---|---|
-| ![Record Sale workflow with product selection and stock-out tracking](docs/screenshots/Record%20Sale.png) | ![Record Restock — supplier-aware stock-in form with filterable history](docs/screenshots/restock.png) |
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <strong>Record Sale</strong><br/><br/>
+      <img src="docs/screenshots/Record%20Sale.png" alt="Record Sale workflow with product selection and stock-out tracking" width="100%" />
+    </td>
+    <td align="center" width="50%">
+      <strong>Record Restock</strong><br/><br/>
+      <img src="docs/screenshots/restock.png" alt="Record Restock — supplier-aware stock-in form with filterable history" width="100%" />
+    </td>
+  </tr>
+</table>
 
 ### AI Insights
 
-![AI Insights — per-product cards with urgency tier and natural-language recommendations](docs/screenshots/insights.png)
-
+<p align="center">
+  <img src="docs/screenshots/insights.png" alt="AI Insights — per-product cards with urgency tier and natural-language recommendations" width="900" />
+</p>
 ---
 
 ## Tech Stack
