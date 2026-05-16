@@ -190,7 +190,7 @@ export default function CustomerOrders() {
         title,
         source: form.source.trim() || null,
         stage: form.stage,
-        estimated_value: form.estimated_value ? parseFloat(form.estimated_value) : 0,
+        estimated_value: form.estimated_value ? Math.round(parseFloat(form.estimated_value)) : 0,
         owner: form.owner.trim() || null,
         next_follow_up_date: form.next_follow_up_date || null,
         notes: notes || null,
