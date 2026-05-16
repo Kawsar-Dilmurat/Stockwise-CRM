@@ -32,6 +32,8 @@ const STATUS_STYLES = {
   INACTIVE: "border-zinc-300 text-zinc-500 bg-zinc-100",
 };
 
+const PIPELINE_STAGES = ["NEW", "CONTACTED", "QUALIFIED", "PROPOSAL"];
+
 const fmt$ = (v) => (v == null ? "—" : `$${Number(v).toLocaleString()}`);
 const fmtDate = (d) => {
   if (!d) return "—";
@@ -243,6 +245,19 @@ export default function CustomerOrders() {
     try {
       await leadsApi.update(id, { stage: "LOST" });
       toast.success("Opportunity marked as LOST. No inventory movement is needed.");
+      load();
+    } catch (e) {
+      toast.error(e?.response?.data?.detail ?? "Update failed");
+    }
+  };
+
+  const advanceStage = async (lead) => {
+    const idx = PIPELINE_STAGES.indexOf(lead.stage);
+    if (idx === -1 || idx === PIPELINE_STAGES.length - 1) return;
+    const next = PIPELINE_STAGES[idx + 1];
+    try {
+      await leadsApi.update(lead.id, { stage: next });
+      toast.success(`Advanced to ${next.charAt(0) + next.slice(1).toLowerCase()}`);
       load();
     } catch (e) {
       toast.error(e?.response?.data?.detail ?? "Update failed");
@@ -876,6 +891,10 @@ export default function CustomerOrders() {
                   <div className="divide-y">
                     {activeLeads.map((lead) => {
                       const customer = customerMap[lead.customer_id];
+                      const _stageIdx = PIPELINE_STAGES.indexOf(lead.stage);
+                      const nextStage = _stageIdx !== -1 && _stageIdx < PIPELINE_STAGES.length - 1
+                        ? PIPELINE_STAGES[_stageIdx + 1]
+                        : null;
                       return (
                         <div key={lead.id} className="py-4 flex items-start justify-between gap-4 flex-wrap">
                           <div className="min-w-0 space-y-1">
@@ -907,6 +926,16 @@ export default function CustomerOrders() {
                             >
                               {lead.stage}
                             </Badge>
+                            {nextStage && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-blue-500/40 text-blue-700 hover:bg-blue-50"
+                                onClick={() => advanceStage(lead)}
+                              >
+                                → {nextStage.charAt(0) + nextStage.slice(1).toLowerCase()}
+                              </Button>
+                            )}
                             <Button
                               size="sm"
                               variant="outline"
