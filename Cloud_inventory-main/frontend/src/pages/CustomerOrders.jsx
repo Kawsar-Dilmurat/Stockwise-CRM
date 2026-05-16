@@ -90,6 +90,8 @@ export default function CustomerOrders() {
   const [submitting, setSubmitting] = useState(false);
   const [evManual, setEvManual] = useState(false);
   const [quoteExpanded, setQuoteExpanded] = useState(false);
+  const [showStatusHelp, setShowStatusHelp] = useState(false);
+  const [showStageHelp, setShowStageHelp] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
 
   const load = async () => {
@@ -654,7 +656,20 @@ export default function CustomerOrders() {
                 <Input placeholder="Acme Furnishings" value={form.company} onChange={set("company")} />
               </div>
               <div className="grid gap-2">
-                <Label>Status</Label>
+                <Label className="flex items-center gap-1">
+                  Status
+                  <button
+                    type="button"
+                    className="text-zinc-400 hover:text-zinc-600 text-[10px] leading-none border border-zinc-300 rounded-full w-4 h-4 inline-flex items-center justify-center shrink-0"
+                    onClick={() => setShowStatusHelp((v) => !v)}
+                    aria-label="Status help"
+                  >?</button>
+                </Label>
+                {showStatusHelp && (
+                  <p className="text-xs text-zinc-500 -mt-1">
+                    Customer relationship level — Lead (potential), Active (currently doing business), Inactive (dormant). This describes the customer overall.
+                  </p>
+                )}
                 <Select value={form.status} onValueChange={setSel("status")}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -684,7 +699,20 @@ export default function CustomerOrders() {
                 <Input placeholder="e.g. Walk-in, Referral" value={form.source} onChange={set("source")} />
               </div>
               <div className="grid gap-2">
-                <Label>Stage</Label>
+                <Label className="flex items-center gap-1">
+                  Stage
+                  <button
+                    type="button"
+                    className="text-zinc-400 hover:text-zinc-600 text-[10px] leading-none border border-zinc-300 rounded-full w-4 h-4 inline-flex items-center justify-center shrink-0"
+                    onClick={() => setShowStageHelp((v) => !v)}
+                    aria-label="Stage help"
+                  >?</button>
+                </Label>
+                {showStageHelp && (
+                  <p className="text-xs text-zinc-500 -mt-1">
+                    Pipeline step of THIS opportunity — New → Contacted → Qualified → Proposal → Won/Lost. This describes one specific deal, not the customer.
+                  </p>
+                )}
                 <Select value={form.stage} onValueChange={setSel("stage")}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -742,6 +770,17 @@ export default function CustomerOrders() {
 
             {/* Quote fields — auto-expanded at Proposal, collapsible at early stages */}
             <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showQuoteFields ? "max-h-[800px] opacity-100" : "max-h-0 opacity-0"}`}>
+              {isEarlyStage && quoteExpanded && (
+                <div className="mb-3 text-right">
+                  <button
+                    type="button"
+                    className="text-xs text-zinc-400 underline underline-offset-2 hover:text-zinc-600"
+                    onClick={() => setQuoteExpanded(false)}
+                  >
+                    Hide quote
+                  </button>
+                </div>
+              )}
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="grid gap-2">
                   <Label>Product</Label>
