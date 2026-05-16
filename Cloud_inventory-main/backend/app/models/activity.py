@@ -13,7 +13,7 @@ class Activity(Base):
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     customer_id = Column(
-        Integer, ForeignKey("customers.id"), nullable=False, index=True
+        Integer, ForeignKey("customers.id", ondelete="CASCADE"), nullable=False, index=True
     )
     lead_id = Column(
         Integer, ForeignKey("leads.id"), nullable=True, index=True

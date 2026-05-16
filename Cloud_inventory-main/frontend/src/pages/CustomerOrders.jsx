@@ -15,6 +15,7 @@ import {
   Package, Plus, RefreshCcw, ClipboardList, Clock, TrendingUp,
 } from "lucide-react";
 import { toast } from "sonner";
+import CustomerEditModal from "@/components/CustomerEditModal";
 
 const STAGE_STYLES = {
   NEW: "border-sky-500/40 text-sky-700 bg-sky-500/10",
@@ -78,6 +79,7 @@ export default function CustomerOrders() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [evManual, setEvManual] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
 
   const load = async () => {
     try {
@@ -975,7 +977,7 @@ export default function CustomerOrders() {
                     .sort((a, b) => new Date(b.created_at ?? 0) - new Date(a.created_at ?? 0))[0];
 
                   return (
-                    <Card key={customer.id} className="border-zinc-200">
+                    <Card key={customer.id} className="border-zinc-200 cursor-pointer hover:border-zinc-300 hover:shadow-sm transition-shadow" onClick={() => setSelectedCustomer(customer)}>
                       <CardContent className="pt-5 pb-4 space-y-3">
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
@@ -1030,6 +1032,13 @@ export default function CustomerOrders() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <CustomerEditModal
+        customer={selectedCustomer}
+        onClose={() => setSelectedCustomer(null)}
+        onSaved={() => { setSelectedCustomer(null); load(); }}
+        onDeleted={() => { setSelectedCustomer(null); load(); }}
+      />
     </div>
   );
 }

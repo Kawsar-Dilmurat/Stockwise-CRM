@@ -64,6 +64,25 @@ async def lifespan(_app: FastAPI):
         await conn.execute(
             text("ALTER TABLE leads ADD COLUMN IF NOT EXISTS delivery_fee INTEGER")
         )
+        # Fix FK cascade: customer deletion now auto-deletes related leads and activities.
+        await conn.execute(
+            text("ALTER TABLE leads DROP CONSTRAINT IF EXISTS leads_customer_id_fkey")
+        )
+        await conn.execute(
+            text(
+                "ALTER TABLE leads ADD CONSTRAINT leads_customer_id_fkey "
+                "FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE"
+            )
+        )
+        await conn.execute(
+            text("ALTER TABLE activities DROP CONSTRAINT IF EXISTS activities_customer_id_fkey")
+        )
+        await conn.execute(
+            text(
+                "ALTER TABLE activities ADD CONSTRAINT activities_customer_id_fkey "
+                "FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE"
+            )
+        )
     logger.info("db.tables.ready")
     await seed_if_empty()
     yield

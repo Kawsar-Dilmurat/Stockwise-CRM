@@ -22,7 +22,7 @@ class Lead(Base):
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     customer_id = Column(
-        Integer, ForeignKey("customers.id"), nullable=False, index=True
+        Integer, ForeignKey("customers.id", ondelete="CASCADE"), nullable=False, index=True
     )
     title = Column(String(255), nullable=False)
     source = Column(String(100), nullable=True)
