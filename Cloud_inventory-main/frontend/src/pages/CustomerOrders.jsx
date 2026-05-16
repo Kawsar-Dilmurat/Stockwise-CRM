@@ -79,6 +79,7 @@ export default function CustomerOrders() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [evManual, setEvManual] = useState(false);
+  const [quoteExpanded, setQuoteExpanded] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
 
   const load = async () => {
@@ -173,7 +174,7 @@ export default function CustomerOrders() {
         title,
         source: form.source.trim() || null,
         stage: form.stage,
-        estimated_value: form.estimated_value ? parseFloat(form.estimated_value) : null,
+        estimated_value: form.estimated_value ? parseFloat(form.estimated_value) : 0,
         owner: form.owner.trim() || null,
         next_follow_up_date: form.next_follow_up_date || null,
         notes: notes || null,
@@ -197,9 +198,16 @@ export default function CustomerOrders() {
       toast.success("Customer inquiry created");
       setForm(EMPTY_FORM);
       setEvManual(false);
+      setQuoteExpanded(false);
       load();
     } catch (e) {
-      toast.error(e?.response?.data?.detail ?? "Failed to create inquiry");
+      const detail = e?.response?.data?.detail;
+      const msg = Array.isArray(detail)
+        ? detail.map((d) => d?.msg ?? String(d)).join("; ")
+        : typeof detail === "string"
+        ? detail
+        : "Failed to create inquiry";
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }
@@ -251,6 +259,8 @@ export default function CustomerOrders() {
   const unitPrice = selectedProduct?.unit_price ?? 0;
   const formQty = parseFloat(form.quantity) || 0;
   const subtotal = unitPrice * formQty;
+  const isEarlyStage = ["NEW", "CONTACTED", "QUALIFIED"].includes(form.stage);
+  const showQuoteFields = !isEarlyStage || quoteExpanded;
 
   return (
     <div className="space-y-8">
@@ -626,7 +636,7 @@ export default function CustomerOrders() {
             <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">Opportunity</div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="grid gap-2 sm:col-span-2">
-                <Label>Title</Label>
+                <Label>Title <span className="text-red-500">*</span></Label>
                 <Input
                   placeholder="e.g. Sofa set inquiry — 3-piece (auto-filled from product if left blank)"
                   value={form.title}
@@ -646,8 +656,6 @@ export default function CustomerOrders() {
                     <SelectItem value="CONTACTED">Contacted</SelectItem>
                     <SelectItem value="QUALIFIED">Qualified</SelectItem>
                     <SelectItem value="PROPOSAL">Proposal</SelectItem>
-                    <SelectItem value="WON">Won</SelectItem>
-                    <SelectItem value="LOST">Lost</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -675,74 +683,96 @@ export default function CustomerOrders() {
           <div>
             <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
               Quote Details{" "}
-              <span className="font-normal normal-case">(optional — select a product to build a quote)</span>
+              {form.stage === "PROPOSAL" ? (
+                <span className="font-normal normal-case text-orange-600">— filling a quote is recommended at this stage</span>
+              ) : (
+                <span className="font-normal normal-case">(optional — select a product to build a quote)</span>
+              )}
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="grid gap-2">
-                <Label>Product</Label>
-                <Select value={form.product_id} onValueChange={setSel("product_id")}>
-                  <SelectTrigger><SelectValue placeholder="Select product…" /></SelectTrigger>
-                  <SelectContent>
-                    {productOptions.map((p) => (
-                      <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+
+            {/* Collapsed hint — slides in for early stages when fields are hidden */}
+            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${!showQuoteFields ? "max-h-40 opacity-100" : "max-h-0 opacity-0"}`}>
+              <div className="rounded-md border border-zinc-100 bg-zinc-50 px-4 py-3 text-sm text-zinc-500 mb-3">
+                Quotes are usually added at the Proposal stage — you can skip this for now.{" "}
+                <button
+                  type="button"
+                  className="text-zinc-700 underline underline-offset-2 hover:text-zinc-900"
+                  onClick={() => setQuoteExpanded(true)}
+                >
+                  Add a quote anyway
+                </button>
               </div>
-              <div className="grid gap-2">
-                <Label>Quantity</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  placeholder="e.g. 2"
-                  value={form.quantity}
-                  onChange={set("quantity")}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label>Unit Price</Label>
-                <div className="h-9 px-3 rounded-md border border-zinc-200 bg-zinc-50 text-sm text-zinc-500 flex items-center">
-                  {selectedProduct ? fmt$(unitPrice) : "—"}
+            </div>
+
+            {/* Quote fields — auto-expanded at Proposal, collapsible at early stages */}
+            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showQuoteFields ? "max-h-[800px] opacity-100" : "max-h-0 opacity-0"}`}>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-2">
+                  <Label>Product</Label>
+                  <Select value={form.product_id} onValueChange={setSel("product_id")}>
+                    <SelectTrigger><SelectValue placeholder="Select product…" /></SelectTrigger>
+                    <SelectContent>
+                      {productOptions.map((p) => (
+                        <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </div>
-              <div className="grid gap-2">
-                <Label>Subtotal</Label>
-                <div className="h-9 px-3 rounded-md border border-zinc-200 bg-zinc-50 text-sm text-zinc-500 flex items-center">
-                  {selectedProduct && formQty > 0 ? fmt$(subtotal) : "—"}
+                <div className="grid gap-2">
+                  <Label>Quantity</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    placeholder="e.g. 2"
+                    value={form.quantity}
+                    onChange={set("quantity")}
+                  />
                 </div>
-              </div>
-              <div className="grid gap-2">
-                <Label>Discount ($)</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  placeholder="e.g. 100"
-                  value={form.discount}
-                  onChange={set("discount")}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label>Delivery Fee ($)</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  placeholder="e.g. 50"
-                  value={form.delivery_fee}
-                  onChange={set("delivery_fee")}
-                />
-              </div>
-              <div className="grid gap-2 sm:col-span-2">
-                <Label>Estimated Value ($)</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  placeholder="e.g. 2500"
-                  value={form.estimated_value}
-                  onChange={setEV}
-                />
-                <p className="text-xs text-zinc-400">
-                  Auto-calculated from product, quantity, discount, and delivery fee. You can override for special quotes.
-                </p>
+                <div className="grid gap-2">
+                  <Label>Unit Price</Label>
+                  <div className="h-9 px-3 rounded-md border border-zinc-200 bg-zinc-50 text-sm text-zinc-500 flex items-center">
+                    {selectedProduct ? fmt$(unitPrice) : "—"}
+                  </div>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Subtotal</Label>
+                  <div className="h-9 px-3 rounded-md border border-zinc-200 bg-zinc-50 text-sm text-zinc-500 flex items-center">
+                    {selectedProduct && formQty > 0 ? fmt$(subtotal) : "—"}
+                  </div>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Discount ($)</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    placeholder="e.g. 100"
+                    value={form.discount}
+                    onChange={set("discount")}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Delivery Fee ($)</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    placeholder="e.g. 50"
+                    value={form.delivery_fee}
+                    onChange={set("delivery_fee")}
+                  />
+                </div>
+                <div className="grid gap-2 sm:col-span-2">
+                  <Label>Estimated Value ($)</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    placeholder="e.g. 2500"
+                    value={form.estimated_value}
+                    onChange={setEV}
+                  />
+                  <p className="text-xs text-zinc-400">
+                    Auto-calculated from product, quantity, discount, and delivery fee. You can override for special quotes.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
