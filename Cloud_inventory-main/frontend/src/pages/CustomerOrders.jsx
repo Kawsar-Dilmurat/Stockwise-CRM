@@ -69,6 +69,14 @@ const EMPTY_FORM = {
   product_id: "", quantity: "", discount: "", delivery_fee: "",
 };
 
+const TAX_RATES = {
+  furniture:  0.0775,
+  appliances: 0.08,
+};
+const DEFAULT_TAX_RATE = 0.0775;
+const resolveTaxRate = (category) =>
+  TAX_RATES[String(category ?? "").trim().toLowerCase()] ?? DEFAULT_TAX_RATE;
+
 export default function CustomerOrders() {
   const [dashboard, setDashboard] = useState(null);
   const [customers, setCustomers] = useState(null);
@@ -116,7 +124,10 @@ export default function CustomerOrders() {
     const d = parseFloat(form.discount) || 0;
     const df = parseFloat(form.delivery_fee) || 0;
     const hasInput = !!form.product_id || q > 0 || d > 0 || df > 0;
-    const calc = Math.max(0, up * q - d + df);
+    const rate = resolveTaxRate(prod?.category);
+    const sub = Math.max(0, up * q - d);
+    const tax = prod ? sub * rate : 0;
+    const calc = sub + tax + df;
     setForm((f) => ({ ...f, estimated_value: hasInput ? String(calc) : "" }));
   }, [form.product_id, form.quantity, form.discount, form.delivery_fee, evManual, products]);
 
@@ -155,6 +166,10 @@ export default function CustomerOrders() {
         const up = selectedProd.unit_price ?? 0;
         const sub = up * q;
         const ev = parseFloat(form.estimated_value) || 0;
+        const rate = resolveTaxRate(selectedProd?.category);
+        const taxableSub = Math.max(0, sub - d);
+        const tax = taxableSub * rate;
+        const taxPctDisplay = parseFloat((rate * 100).toFixed(2));
         const quoteBlock = [
           "--- Quote Details ---",
           `Product: ${selectedProd.name}${selectedProd.sku ? ` (SKU: ${selectedProd.sku})` : ""}`,
@@ -162,6 +177,7 @@ export default function CustomerOrders() {
           `Unit Price: $${Number(up).toLocaleString()}`,
           `Subtotal: $${Number(sub).toLocaleString()}`,
           `Discount: $${Number(d).toLocaleString()}`,
+          `Tax (${taxPctDisplay}%): $${Number(tax).toLocaleString()}`,
           `Delivery Fee: $${Number(df).toLocaleString()}`,
           `Estimated Value: $${Number(ev).toLocaleString()}`,
           `Manual Override: ${evManual ? "Yes" : "No"}`,
@@ -259,6 +275,11 @@ export default function CustomerOrders() {
   const unitPrice = selectedProduct?.unit_price ?? 0;
   const formQty = parseFloat(form.quantity) || 0;
   const subtotal = unitPrice * formQty;
+  const formDiscount = parseFloat(form.discount) || 0;
+  const taxableSubtotal = Math.max(0, subtotal - formDiscount);
+  const taxRate = resolveTaxRate(selectedProduct?.category);
+  const taxAmount = selectedProduct ? taxableSubtotal * taxRate : 0;
+  const taxPct = parseFloat((taxRate * 100).toFixed(2));
   const isEarlyStage = ["NEW", "CONTACTED", "QUALIFIED"].includes(form.stage);
   const showQuoteFields = !isEarlyStage || quoteExpanded;
 
@@ -759,6 +780,12 @@ export default function CustomerOrders() {
                     value={form.delivery_fee}
                     onChange={set("delivery_fee")}
                   />
+                </div>
+                <div className="grid gap-2 sm:col-span-2">
+                  <Label>Tax ({taxPct}%)</Label>
+                  <div className="h-9 px-3 rounded-md border border-zinc-200 bg-zinc-50 text-sm text-zinc-500 flex items-center">
+                    {selectedProduct && formQty > 0 ? fmt$(taxAmount) : "—"}
+                  </div>
                 </div>
                 <div className="grid gap-2 sm:col-span-2">
                   <Label>Estimated Value ($)</Label>
