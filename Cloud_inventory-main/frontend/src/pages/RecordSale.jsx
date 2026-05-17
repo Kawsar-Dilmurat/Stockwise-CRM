@@ -6,11 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useLocation } from "react-router-dom";
 import { productsApi, salesApi } from "@/lib/api";
 import { ShoppingCart, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function RecordSale() {
+  const location = useLocation();
+  const prefill = location.state?.prefill ?? null;
   const [products, setProducts] = useState(null);
   const [sales, setSales] = useState(null);
   const [productId, setProductId] = useState("");
@@ -25,6 +28,12 @@ export default function RecordSale() {
     } catch { toast.error("Failed to load data"); }
   };
   useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    if (!prefill || !products) return;
+    if (prefill.product_id) setProductId(String(prefill.product_id));
+    if (prefill.quantity) setQuantity(prefill.quantity);
+  }, [products]); // run once when products load, so the Select can match the id
 
   const submit = async () => {
     if (!productId) return toast.error("Select a product");

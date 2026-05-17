@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,6 +82,7 @@ const resolveTaxRate = (category) =>
   TAX_RATES[String(category ?? "").trim().toLowerCase()] ?? DEFAULT_TAX_RATE;
 
 export default function CustomerOrders() {
+  const navigate = useNavigate();
   const [dashboard, setDashboard] = useState(null);
   const [customers, setCustomers] = useState(null);
   const [leads, setLeads] = useState(null);
@@ -235,11 +237,18 @@ export default function CustomerOrders() {
     }
   };
 
-  const markWon = async (id) => {
+  const markWon = async (lead) => {
     try {
-      await leadsApi.update(id, { stage: "WON" });
-      toast.success("Opportunity marked as WON. Next step: record the actual sale so inventory can be updated.");
-      load();
+      await leadsApi.update(lead.id, { stage: "WON" });
+      toast.success("Marked as Won! Redirecting to Record Sale…");
+      navigate("/sales", {
+        state: {
+          prefill: {
+            product_id: lead.product_id ?? null,
+            quantity: lead.quantity ?? 1,
+          },
+        },
+      });
     } catch (e) {
       toast.error(e?.response?.data?.detail ?? "Update failed");
     }
@@ -989,7 +998,7 @@ export default function CustomerOrders() {
                               size="sm"
                               variant="outline"
                               className="border-emerald-500/40 text-emerald-700 hover:bg-emerald-50"
-                              onClick={() => markWon(lead.id)}
+                              onClick={() => markWon(lead)}
                             >
                               <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Mark Won
                             </Button>
