@@ -50,15 +50,22 @@ Cloud_inventory-main/README.md
 - Customer Orders workspace for customer inquiries and sales opportunities
 - Customer profiles connected to leads and follow-up activities
 - Lead pipeline with stages: New, Contacted, Qualified, Proposal, Won, and Lost
+- Stage progression guided one step at a time through buttons in the pipeline view
 - Product-based quote builder using:
 
   ```text
-  unit price × quantity - discount + delivery fee
-Manual quote override for special cases such as bulk discounts, delivery fees, installation, or custom bundle pricing
-Pipeline KPI cards for open opportunities, pending order value, upcoming follow-ups, won value, lost value, and customer count
-Pipeline analytics for order outcomes, value by stage, stage breakdown, follow-up status, and best-selling products
-Best-Selling Products card scoped to a rolling 7-day sales window so it matches the dashboard’s recent sales metric
-Local demo reset scripts for inventory and CRM data with dry-run defaults and safety guards
+  unit price × quantity - discount + delivery fee + tax
+  ```
+
+  with category-based tax rates (Furniture 7.75%, Appliances 8%) applied automatically
+- Quote section collapses at early pipeline stages and expands when relevant
+- Manual quote override for special cases such as bulk pricing or custom bundles
+- Opportunity editing modal with all quote fields and auto-calculated estimated value
+- Won opportunity handoff that navigates to Record Sale with product and quantity pre-filled
+- Pipeline KPI cards for open opportunities, pending order value, upcoming follow-ups, won value, lost value, and customer count
+- Pipeline analytics for order outcomes, value by stage, stage breakdown, follow-up status, and best-selling products
+- Best-Selling Products card scoped to a rolling 7-day sales window to match the dashboard sales metric
+- Local demo reset scripts for inventory and CRM data with dry-run defaults and safety guards
 Project location
 
 The main application source code is inside:
@@ -152,3 +159,6 @@ Product-based quote calculation
 CRM-style lead and follow-up workflow design
 Dashboard UI for operational decision-making
 Deployment safety through a separate repo and independent cloud resources
+Opportunity lifecycle management from inquiry to inventory movement
+Pre-populated modal editing with live quote calculation
+Category-based business logic applied consistently across workflows
