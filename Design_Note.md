@@ -270,25 +270,38 @@ Managed Database
 
 ### Business data flow
 
-Inventory side                    CRM side
-─────────────────                 ──────────────────────────
-Product catalog                   Customer profile
-    |                                 |
-    ├── Record Sale                   └── Lead / Opportunity
-    │   └── stock decreases               ├── Quote (product, qty,
-    │                                     │   discount, delivery fee,
-    └── Record Restock                    │   tax, estimated value)
-        └── stock increases               ├── Follow-up activities
-                                          └── Stage progression
-                                              NEW → CONTACTED →
-                                              QUALIFIED → PROPOSAL →
-                                              WON / LOST
+**Inventory side**
 
-Connection point:
+```text
+Product catalog
+    |
+    ├── Record Sale
+    │   └── stock decreases
+    │
+    └── Record Restock
+        └── stock increases
+```
+
+**CRM side**
+
+```text
+Customer profile
+    |
+    └── Lead / Opportunity
+            ├── Quote (product, qty, discount, delivery fee, tax, estimated value)
+            ├── Follow-up activities
+            └── Stage progression
+                NEW → CONTACTED → QUALIFIED → PROPOSAL → WON / LOST
+```
+
+**Connection point:**
+
+```text
 Lead (Won) ──► Record Sale ──► stock decreases
-
+```
 ### Opportunity lifecycle
 
+```text
 New inquiry
     |
     v
@@ -307,6 +320,7 @@ NEW ──► CONTACTED ──► QUALIFIED ──► PROPOSAL
                               |
                               v
                        Stock decreases
+```
 
                        
 ## 8. CORS and deployment safety decisions
