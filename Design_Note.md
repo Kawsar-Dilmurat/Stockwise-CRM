@@ -467,7 +467,7 @@ estimated_value
 The basic formula is:
 
 ```text
-unit price × quantity - discount + delivery fee
+(unit price × quantity) * tax rate - discount + delivery fee
 ```
 
 This helped connect CRM and inventory:
@@ -643,19 +643,8 @@ This makes the project more relevant for backend, cloud, CRM, sales operations, 
 
 ---
 
-## 20. What I would say in an interview
 
-If an interviewer asks what I designed, I would explain it like this:
-
-> I started Stockwise as an inventory management app, but I did not want it to stay as a basic CRUD project. I designed it around real stock movement: sales decrease inventory, restocks increase inventory, and suppliers connect to restock history. Then I added rule-based inventory insights so the system could explain which products need attention without relying on black-box ML.
-
-> Later, I upgraded it into a sales and inventory operations platform by adding Customer Orders. I added customers, leads, activities, product-based quotes, follow-up tasks, pipeline KPI cards, and won/lost stages. The important design decision was that a customer inquiry does not affect inventory until it becomes a real sale. So CRM and inventory are connected, but they are not mixed together incorrectly.
-
-> Technically, I used React for the dashboard UI, FastAPI for the backend, SQLAlchemy and PostgreSQL for relational data, AWS Amplify for frontend hosting, Render for backend hosting, and Neon for the managed database. I also added Docker, GitHub Actions checks, environment-based config, CORS restrictions, and smoke tests to make the deployment more realistic.
-
----
-
-## 21. Main tradeoffs
+## 20. Main tradeoffs
 
 ### I chose practical cloud deployment over overly complex AWS infrastructure
 
@@ -674,7 +663,7 @@ The goal was not to recreate Salesforce. The goal was to add enough customer-ord
 The CRM upgrade could have broken the original Stockwise deployment. Keeping the new version separate until it was verified was safer and more professional.
 
 ---
-## 21b. Opportunity editing decision
+## 21. Opportunity editing decision
 
 After the CRM pipeline was working, I added the ability to edit opportunities after they were created.
 
@@ -684,7 +673,7 @@ So I built the edit modal with the same fields as the create form: title, stage,
 
 The edit modal reuses the existing PUT /api/leads/{id} endpoint. No new backend route was needed.
 
-## 21c. Won to sale handoff decision
+## 22. Won to sale handoff decision
 
 When an opportunity is marked Won, the obvious next step is to record the actual sale so inventory is updated. The question was how to connect those two steps without duplicating logic.
 
@@ -696,7 +685,7 @@ The implementation uses React Router's location state to pass the prefill data. 
 
 
 
-## 22. Future improvements
+## 23. Future improvements
 
 The next improvements I would consider are:
 
@@ -712,7 +701,7 @@ The next improvements I would consider are:
 
 ---
 
-## 23. What this project demonstrates
+## 24. What this project demonstrates
 
 Stockwise demonstrates that I can take an operational business problem and turn it into a working system.
 
