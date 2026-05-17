@@ -683,9 +683,25 @@ This avoided building a separate panel, handling stock validation a second time,
 
 The implementation uses React Router's location state to pass the prefill data. RecordSale reads it once when the product list loads and sets the form fields. If there is no prefill, the page behaves normally.
 
+23. Inventory status consistency decision
+The project currently uses two separate status systems for inventory health:
+Products page uses a simple threshold rule:
+
+stock = 0 → Out of stock
+stock <= reorder_threshold → Low stock
+stock > reorder_threshold → Healthy
+
+AI Insights page and Dashboard use a dynamic urgency tier calculated from sales velocity and days left:
+
+estimated_days_left and avg_daily_sales drive the tier
+Output: HEALTHY / WATCH / LOW / MODERATE / HIGH / CRITICAL
+
+This means the same product can show "Healthy" on the Products page but "HIGH" on the Dashboard — for example, a product with stock above threshold but only 4 days of supply remaining based on recent sales velocity.
+The inconsistency is a known design tradeoff. The dynamic urgency tier is more accurate for operational decisions. The static threshold label on the Products page is simpler and faster to render without an additional API call.
+The ideal fix would be to have the Products page reuse the urgency tier from the insights service, replacing the static label with the dynamic one. This was not implemented in the current version because the Products page is primarily a catalog management view, and adding an insights API dependency would increase load complexity for a page that is not the main operational dashboard.
 
 
-## 23. Future improvements
+## 24. Future improvements
 
 The next improvements I would consider are:
 
