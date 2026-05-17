@@ -57,14 +57,12 @@ Stockwise gives that workflow a more structured path.
 ### Customer sales pipeline
 
 - Customer inquiries are captured before they affect inventory.
-- Each inquiry moves through a sales pipeline:
-  - New
-  - Contacted
-  - Qualified
-  - Proposal
-  - Won
-  - Lost
-- Product-based quotes calculate estimated deal value from unit price, quantity, discount, and delivery fee.
+- Each inquiry moves through a sales pipeline with stages: New, Contacted, Qualified, Proposal, Won, and Lost.
+- Stage progression is guided — each stage advances one step at a time through a button in the pipeline view.
+- Product-based quotes calculate estimated deal value from unit price, quantity, discount, and delivery fee, with category-based tax rates applied automatically (Furniture 7.75%, Appliances 8%).
+- The quote form is collapsed at early stages and expands when relevant, keeping the form focused.
+- Opportunities can be edited after creation, including title, stage, quote fields, notes, and follow-up date.
+- Marking an opportunity as Won navigates directly to the Record Sale page with the product and quantity pre-filled.
 - Follow-up tasks keep the pipeline moving without a separate task tool.
 - Pipeline KPI cards show open value, won value, lost value, and upcoming follow-ups.
 
@@ -128,7 +126,7 @@ It helps a small business track customer interest before it becomes an actual in
 
 ### Customer profiles
 
-Customer profiles store customer and company information. They are connected to leads and follow-up activities so the team can see customer context, active opportunities, and order history-like pipeline value in one place.
+Customer profiles store customer and company information. They are connected to leads and follow-up activities so the team can see customer context, active opportunities, and order history-like pipeline value in one place. Customer records can be edited and deleted. Deleting a customer removes the associated leads and activities through database-level cascade rules.
 
 ### Lead pipeline
 
@@ -142,7 +140,7 @@ Supported stages:
 | Contacted | The customer has been contacted and interest has been confirmed. |
 | Qualified | The opportunity looks realistic based on budget, product need, quantity, or timeline. |
 | Proposal | A quote or proposal has been sent and the customer is deciding. |
-| Won | The customer agreed to purchase. The next step is to record the actual sale so inventory is updated. |
+| Won | The customer agreed to purchase. Clicking Mark Won navigates to the Record Sale page with the product and quantity pre-filled from the opportunity. |
 | Lost | The opportunity did not convert. No inventory movement is needed. |
 
 ### Product-based quote form
@@ -157,20 +155,29 @@ unit price × quantity - discount + delivery fee
 
 The form supports:
 
-- selecting an existing product,
-- pulling the unit price from the product catalog,
+- selecting an existing product from the catalog,
+- pulling the unit price automatically,
 - entering quantity,
 - applying a discount,
 - adding a delivery fee,
+- applying a category-based tax rate (Furniture 7.75%, Appliances 8%),
 - auto-calculating estimated value,
 - manually overriding the final quote for special cases, and
-- automatically adding quote details into the lead notes.
+- collapsing the quote section at early pipeline stages to keep the form focused.
 
 This makes the CRM pipeline more realistic because opportunity value is connected to product pricing instead of being a random manually typed number.
 
 ### Follow-up activities
 
 Activities can be attached to customers and leads. They support follow-up tasks, notes, and interactions. Follow-up tasks can be marked complete directly from the Customer Orders workspace.
+
+### Opportunity editing
+
+Opportunities can be edited after they are created. The edit modal includes all fields from the original form: title, stage, notes, follow-up date, and the full quote builder with product, quantity, discount, delivery fee, and auto-calculated estimated value.
+
+### Won to sale handoff
+
+When an opportunity is marked Won, the app navigates to the Record Sale page and pre-fills the product and quantity from the opportunity. The user confirms and submits on the Record Sale page, which runs the existing stock-decrement workflow. This keeps inventory logic in one place instead of duplicating it in the pipeline view.
 
 ### Pipeline KPI cards
 
@@ -812,6 +819,9 @@ This separation made it possible to deploy and test the CRM version safely befor
 - Environment-based frontend/backend configuration
 - CORS configuration for deployed frontend/backend communication
 - CI/CD and deployment safety practices
+- Opportunity lifecycle management from inquiry through to inventory movement
+- Form state management with pre-populated modals and live quote calculation
+- Category-based tax logic applied consistently across create and edit workflows
 
 ---
 
@@ -820,7 +830,6 @@ This separation made it possible to deploy and test the CRM version safely befor
 - Add authentication and user accounts
 - Add role-based access control for sales and inventory users
 - Add opportunity item tables for multi-product quotes
-- Add a “Convert Won Opportunity to Sale” workflow
 - Add CSV export for customer orders and inventory reports
 - Add more detailed sales analytics
 - Add real LLM provider support for inventory summaries
