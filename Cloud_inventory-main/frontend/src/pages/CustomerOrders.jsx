@@ -12,10 +12,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { customersApi, leadsApi, activitiesApi, crmApi, salesApi, productsApi } from "@/lib/api";
 import {
   Users, DollarSign, Calendar, CheckCircle2, XCircle, BarChart2, PieChart,
-  Package, Plus, RefreshCcw, ClipboardList, Clock, TrendingUp,
+  Package, Plus, RefreshCcw, ClipboardList, Clock, TrendingUp, Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import CustomerEditModal from "@/components/CustomerEditModal";
+import LeadEditModal from "@/components/LeadEditModal";
 
 const STAGE_STYLES = {
   NEW: "border-sky-500/40 text-sky-700 bg-sky-500/10",
@@ -93,6 +94,7 @@ export default function CustomerOrders() {
   const [showStatusHelp, setShowStatusHelp] = useState(false);
   const [showStageHelp, setShowStageHelp] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [selectedLead, setSelectedLead] = useState(null);
 
   const load = async () => {
     try {
@@ -959,6 +961,14 @@ export default function CustomerOrders() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-zinc-300 text-zinc-600 hover:bg-zinc-50"
+                              onClick={(e) => { e.stopPropagation(); setSelectedLead(lead); }}
+                            >
+                              <Pencil className="w-3.5 h-3.5 mr-1" /> Edit
+                            </Button>
                             <Badge
                               variant="outline"
                               className={`${STAGE_STYLES[lead.stage] ?? ""} font-semibold tracking-wide`}
@@ -1163,6 +1173,11 @@ export default function CustomerOrders() {
         onClose={() => setSelectedCustomer(null)}
         onSaved={() => { setSelectedCustomer(null); load(); }}
         onDeleted={() => { setSelectedCustomer(null); load(); }}
+      />
+      <LeadEditModal
+        lead={selectedLead}
+        onClose={() => setSelectedLead(null)}
+        onSaved={() => { setSelectedLead(null); load(); }}
       />
     </div>
   );
